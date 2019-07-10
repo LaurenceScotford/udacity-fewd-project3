@@ -158,13 +158,13 @@ class Player {
             lives++;
             break;
           case GEM_BLUE:
-            score += 5;
+            score.addScore(BLUE_SCORE);
             break;
           case GEM_GREEN:
-            score += 10;
+            score.addScore(GREEN_SCORE);
             break;
           case GEM_ORANGE:
-            score += 20;
+            score.addScore(ORANGE_SCORE);
             break;
          }
          pickups.splice(pickup, 1);
@@ -184,7 +184,7 @@ class Player {
   update() {
     // Check for a win condition
     if (this.targetPos.y === PLAYER_WIN_ROW) {
-      score += WIN_SCORE;
+      score.addScore(WIN_SCORE);
       this.resetFunc();
     } else {
       // Check the player is not trying to move into a space occupied by a rock
@@ -208,6 +208,31 @@ class Player {
     ctx.drawImage(this.sprite, this.playerPos.x, this.playerPos.y);
   }
 }
+
+class Score {
+  constructor() {
+    this._score = 0;
+    this._targetScore = 0;
+    this._timeSinceUpdate = 0;
+  }
+
+  addScore(score) {
+    this._targetScore += score;
+  }
+
+  getScore(score) {
+    return this._score;
+  }
+
+  update(dt) {
+    this._timeSinceUpdate += dt;
+    if (this._timeSinceUpdate >= SCORE_DELAY) {
+      this._score += (this._score < this._targetScore);
+      this._timeSinceUpdate = 0;
+    }
+  }
+}
+
 
 // Utility functions
 
@@ -233,6 +258,9 @@ var allEnemies = [];
 
 // Place the player object in a variable called player
 var player;
+
+// This will hold the score object
+var score;
 
 // This listens for key presses and sends the keys to the
 // Player.handleInput() method.

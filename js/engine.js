@@ -27,7 +27,6 @@ var Engine = (function(global) {
       global.ctx = canvas.getContext('2d');
       global.lastTime;
       global.level;
-      global.score;
       global.lives;
       global.pickups;
       global.locked;
@@ -81,8 +80,11 @@ var Engine = (function(global) {
         player = new Player();
         // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
         player.setReset(reset);
+
+        // Create new object to hold the score
+        score = new Score();
+
         level = 0;
-        score = 0;
         lives = 5;
         reset(false);
         lastTime = Date.now();
@@ -99,6 +101,7 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
+        score.update(dt);
         updateEntities(dt);
     }
 
@@ -133,7 +136,7 @@ var Engine = (function(global) {
        ctx.clearRect(0,0,canvas.width,canvas.height);
 
         // Draw the score and lives
-        ctx.fillText(SCORE_TEXT + score, SCORE_X, SCORE_Y);
+        ctx.fillText(SCORE_TEXT + score.getScore(), SCORE_X, SCORE_Y);
         ctx.fillText(LIVES_TEXT + lives, LIVES_X, LIVES_Y);
 
 
