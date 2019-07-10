@@ -18,15 +18,19 @@ var Engine = (function(global) {
      * create the canvas element, grab the 2D context for that canvas
      * set the canvas element's height/width and add it to the DOM.
      */
-    var doc = global.document,
-        win = global.window,
-        canvas = doc.createElement('canvas'),
-        ctx = canvas.getContext('2d'),
-        lastTime;
 
-    canvas.width = 505;
-    canvas.height = 606;
-    doc.body.appendChild(canvas);
+     var doc = global.document,
+        win = global.window;
+
+        // create visible canvas
+      global.canvas = doc.createElement('canvas');
+      global.ctx = canvas.getContext('2d');
+      global.lastTime;
+      global.level;
+
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
+      doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -39,13 +43,16 @@ var Engine = (function(global) {
          * computer is) - hurray time!
          */
         var now = Date.now(),
-            dt = (now - lastTime) / 1000.0;
+            dt = (now - lastTime) / ONE_SECOND;
 
         /* Call our update/render functions, pass along the time delta to
          * our update function since it may be used for smooth animation.
          */
         update(dt);
         render();
+
+        // detect collisions between player and enemy sprites
+        // player.detectCollisions();
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -63,7 +70,11 @@ var Engine = (function(global) {
      * game loop.
      */
     function init() {
-        reset();
+        player = new Player();
+        // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
+        player.setReset(reset);
+        level = 0;
+        reset(false);
         lastTime = Date.now();
         main();
     }
@@ -106,17 +117,8 @@ var Engine = (function(global) {
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
-        var rowImages = [
-                'images/water-block.png',   // Top row is water
-                'images/stone-block.png',   // Row 1 of 3 of stone
-                'images/stone-block.png',   // Row 2 of 3 of stone
-                'images/stone-block.png',   // Row 3 of 3 of stone
-                'images/grass-block.png',   // Row 1 of 2 of grass
-                'images/grass-block.png'    // Row 2 of 2 of grass
-            ],
-            numRows = 6,
-            numCols = 5,
-            row, col;
+        let rowImages = LEVELS[level].rows,
+          row, col;
 
         // Before drawing, clear existing canvas
         ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -125,8 +127,8 @@ var Engine = (function(global) {
          * and, using the rowImages array, draw the correct image for that
          * portion of the "grid"
          */
-        for (row = 0; row < numRows; row++) {
-            for (col = 0; col < numCols; col++) {
+        for (row = 0; row < GRID_ROWS; row++) {
+            for (col = 0; col < GRID_COLS; col++) {
                 /* The drawImage function of the canvas' context element
                  * requires 3 parameters: the image to draw, the x coordinate
                  * to start drawing and the y coordinate to start drawing.
@@ -134,10 +136,9 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+                ctx.drawImage(Resources.get(rowImages[row]), col * CELL_SIZE_X, row * CELL_SIZE_Y);
             }
         }
-
         renderEntities();
     }
 
@@ -160,8 +161,14 @@ var Engine = (function(global) {
      * handle game reset states - maybe a new game menu or a game over screen
      * those sorts of things. It's only called once by the init() method.
      */
-    function reset() {
-        // noop
+    function reset(levelUp) {
+        // If we're levelling up, go to the next level
+        if (levelUp) {
+          level++;
+        }
+
+        Enemy.genEnemies();
+        player.resetPlayer();
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -169,11 +176,11 @@ var Engine = (function(global) {
      * all of these images are properly loaded our game will start.
      */
     Resources.load([
-        'images/stone-block.png',
-        'images/water-block.png',
-        'images/grass-block.png',
-        'images/enemy-bug.png',
-        'images/char-boy.png'
+        BLOCK_STONE,
+        BLOCK_WATER,
+        BLOCK_GRASS,
+        ENEMY_SPRITE,
+        PLAYER_SPRITE
     ]);
     Resources.onReady(init);
 
