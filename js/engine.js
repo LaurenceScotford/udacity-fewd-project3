@@ -29,6 +29,7 @@ var Engine = (function(global) {
       global.level;
       global.score;
       global.lives;
+      global.pickups;
 
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
@@ -56,6 +57,9 @@ var Engine = (function(global) {
 
         // detect collisions between player and enemy sprites
         player.detectCollisions();
+
+        // detect detectPickups
+        player.detectPickups();
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -169,6 +173,10 @@ var Engine = (function(global) {
             enemy.render();
         });
 
+        pickups.forEach(function(pickup) {
+          ctx.drawImage(Resources.get(pickup.type), pickup.x * CELL_SIZE_X, pickup.y * CELL_SIZE_Y);
+        });
+
         player.render();
     }
 
@@ -181,6 +189,9 @@ var Engine = (function(global) {
         if (levelUp) {
           level++;
         }
+
+        // Create mutable array of pickups for current level
+        pickups = [...LEVELS[level].pickups];
 
         Enemy.genEnemies();
         player.resetPlayer();
@@ -196,6 +207,7 @@ var Engine = (function(global) {
         BLOCK_GRASS,
         BLOCK_FLAG,
         ROCK,
+        HEART,
         ENEMY_SPRITE,
         PLAYER_SPRITE
     ]);

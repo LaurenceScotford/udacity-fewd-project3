@@ -129,11 +129,11 @@ class Player {
   }
 
   /*
-   * This function detects collisions between the player and enemy sprites.
+   * This method detects collisions between the player and enemy sprites.
    * If a collision is detected then the collided function is called in app.js
    */
    detectCollisions() {
-     for(let enemy in allEnemies) {
+     for (let enemy in allEnemies) {
        let theEnemy = allEnemies[enemy];
        if (theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
            PLAYER_WIDTH, PLAYER_HEIGHT)) {
@@ -142,6 +142,24 @@ class Player {
              break;
         }
       }
+   }
+
+   /*
+    * This method detects collisions between the player and a pickup.
+    * If a collision is detected then action is taken appropriate to the pick-up type
+    * and the pickup is destroyed
+    */
+   detectPickups() {
+     for (let pickup in pickups) {
+       if (pickups[pickup].x === this.gridPos.x && pickups[pickup].y === this.gridPos.y) {
+         switch(pickups[pickup].type) {
+           case HEART:
+            lives++;
+            break;
+         }
+         pickups.splice(pickup, 1);
+       }
+     }
    }
 
   // Update the player's position

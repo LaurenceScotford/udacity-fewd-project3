@@ -30,19 +30,22 @@ const BLOCK_STONE = 'images/stone-block.png';
 const BLOCK_WATER = 'images/water-block.png';
 const BLOCK_FLAG = 'images/flag-block.png';
 const ROCK = 'images/Rock.png';
+const HEART = 'images/Heart.png';
 const RIGHT = 0;
 const LEFT = 1;
 const ONE_SECOND = 1000.0;
 const WIN_SCORE = 50;
 const FONT = "40px Arial";
 const LEVELS = [
-  {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_STONE, BLOCK_STONE, BLOCK_FLAG],
+  {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
    enemies: [
      null,
      {dir: RIGHT, speed: 100, pattern:[0]},
+     null,
      {dir: LEFT, speed: 150, pattern:[2]},
-     {dir: RIGHT, speed: 200, pattern:[4]},
+//     {dir: RIGHT, speed: 200, pattern:[4]},
    ],
-   rocks: [{x:1, y:1}]
+   rocks: [{x:1, y:1}],
+   pickups: [{type: HEART, x: 3, y:3}]
   }
 ];
