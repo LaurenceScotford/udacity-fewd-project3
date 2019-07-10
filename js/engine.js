@@ -132,8 +132,8 @@ var Engine = (function(global) {
        ctx.clearRect(0,0,canvas.width,canvas.height);
 
         // Draw the score and lives
-        ctx.fillText("Score " + score, 0, 35);
-        ctx.fillText("Lives " + lives, 380, 35);
+        ctx.fillText(SCORE_TEXT + score, SCORE_X, SCORE_Y);
+        ctx.fillText(LIVES_TEXT + lives, LIVES_X, LIVES_Y);
 
 
         /* Loop through the number of rows and columns we've defined above
@@ -153,12 +153,6 @@ var Engine = (function(global) {
             }
         }
         renderEntities();
-
-        // Render rocks
-        let rocks = LEVELS[level].rocks;
-        for (let rock = 0; rock < rocks.length; rock++) {
-          ctx.drawImage(Resources.get(ROCK), rocks[rock].x * CELL_SIZE_X, rocks[rock].y * CELL_SIZE_Y);
-        }
     }
 
     /* This function is called by the render function and is called on each game
@@ -173,11 +167,17 @@ var Engine = (function(global) {
             enemy.render();
         });
 
+        player.render();
+
         pickups.forEach(function(pickup) {
           ctx.drawImage(Resources.get(pickup.type), pickup.x * CELL_SIZE_X, pickup.y * CELL_SIZE_Y);
         });
 
-        player.render();
+        // Render rocks
+        let rocks = LEVELS[level].rocks;
+        for (let rock = 0; rock < rocks.length; rock++) {
+          ctx.drawImage(Resources.get(ROCK), rocks[rock].x * CELL_SIZE_X, rocks[rock].y * CELL_SIZE_Y);
+        }
     }
 
     /* This function does nothing but it could have been a good place to
@@ -208,6 +208,10 @@ var Engine = (function(global) {
         BLOCK_FLAG,
         ROCK,
         HEART,
+        GEM_BLUE,
+        GEM_GREEN,
+        GEM_ORANGE,
+        KEY,
         ENEMY_SPRITE,
         PLAYER_SPRITE
     ]);

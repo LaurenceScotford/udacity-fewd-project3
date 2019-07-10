@@ -156,6 +156,15 @@ class Player {
            case HEART:
             lives++;
             break;
+          case GEM_BLUE:
+            score += 5;
+            break;
+          case GEM_GREEN:
+            score += 10;
+            break;
+          case GEM_ORANGE:
+            score += 20;
+            break;
          }
          pickups.splice(pickup, 1);
        }

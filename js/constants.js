@@ -31,11 +31,21 @@ const BLOCK_WATER = 'images/water-block.png';
 const BLOCK_FLAG = 'images/flag-block.png';
 const ROCK = 'images/Rock.png';
 const HEART = 'images/Heart.png';
+const KEY = 'images/Key.png';
+const GEM_BLUE = 'images/Gem Blue.png';
+const GEM_GREEN = 'images/Gem Green.png';
+const GEM_ORANGE = 'images/Gem Orange.png';
 const RIGHT = 0;
 const LEFT = 1;
 const ONE_SECOND = 1000.0;
 const WIN_SCORE = 50;
 const FONT = "40px Arial";
+const SCORE_TEXT = "Score ";
+const SCORE_X = 0;
+const SCORE_Y = 35;
+const LIVES_TEXT = "Lives ";
+const LIVES_X = 380;
+const LIVES_Y = 35;
 const LEVELS = [
   {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
    enemies: [
@@ -46,6 +56,7 @@ const LEVELS = [
 //     {dir: RIGHT, speed: 200, pattern:[4]},
    ],
    rocks: [{x:1, y:1}],
-   pickups: [{type: HEART, x: 3, y:3}]
+   pickups: [{type: HEART, x: 3, y:3}, {type: GEM_BLUE, x:0, y:3}, {type: GEM_GREEN, x:1, y:3},
+   {type: GEM_ORANGE, x:2, y:3}, {type: KEY, x:4, y:3}]
   }
 ];
