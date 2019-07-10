@@ -27,9 +27,12 @@ var Engine = (function(global) {
       global.ctx = canvas.getContext('2d');
       global.lastTime;
       global.level;
+      global.score;
+      global.lives;
 
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
+      ctx.font = FONT;
       doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
@@ -74,6 +77,8 @@ var Engine = (function(global) {
         // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
         player.setReset(reset);
         level = 0;
+        score = 0;
+        lives = 5;
         reset(false);
         lastTime = Date.now();
         main();
@@ -120,7 +125,12 @@ var Engine = (function(global) {
           row, col;
 
         // Before drawing, clear existing canvas
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+       ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        // Draw the score and lives
+        ctx.fillText("Score " + score, 0, 35);
+        ctx.fillText("Lives " + lives, 380, 35);
+
 
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that

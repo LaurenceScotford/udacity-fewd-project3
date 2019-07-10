@@ -33,6 +33,8 @@ const ROCK = 'images/Rock.png';
 const RIGHT = 0;
 const LEFT = 1;
 const ONE_SECOND = 1000.0;
+const WIN_SCORE = 50;
+const FONT = "40px Arial";
 const LEVELS = [
   {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_STONE, BLOCK_STONE, BLOCK_FLAG],
    enemies: [

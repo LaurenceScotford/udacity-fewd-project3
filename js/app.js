@@ -137,6 +137,7 @@ class Player {
        let theEnemy = allEnemies[enemy];
        if (theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
            PLAYER_WIDTH, PLAYER_HEIGHT)) {
+             lives--;
              player.resetFunc();
              break;
         }
@@ -147,6 +148,7 @@ class Player {
   update() {
     // Check for a win condition
     if (this.targetPos.y === PLAYER_WIN_ROW) {
+      score += WIN_SCORE;
       this.resetFunc();
     } else {
       // Check the player is not trying to move into a space occupied by a rock
