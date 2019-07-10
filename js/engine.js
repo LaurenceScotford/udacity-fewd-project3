@@ -26,25 +26,6 @@ var Engine = (function(global) {
       global.canvas = doc.createElement('canvas');
       global.ctx = canvas.getContext('2d');
       global.lastTime;
-      global.level;
-      global.pickups;
-      global.locked;
-
-      // Now instantiate your objects.
-      // Place all enemy objects in an array called allEnemies
-      global.allEnemies = [];
-
-      // Place the player object in a variable called player
-      global.player;
-
-      // These objects will hold the score and lives objects
-      global.score;
-      global.lives;
-
-      // These will hold the key and pickup objects
-      global.key;
-      global.pickups = [];
-      global.rocks = [];
 
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
@@ -70,10 +51,10 @@ var Engine = (function(global) {
         render();
 
         // detect collisions between player and enemy sprites
-        player.detectCollisions();
+        gameModel.player.detectCollisions();
 
         // detect detectPickups
-        player.detectPickups();
+        gameModel.player.detectPickups();
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -91,11 +72,11 @@ var Engine = (function(global) {
      * game loop.
      */
     function init() {
-      level = 0;
+      gameModel.level = 0;
 
-      player = new Player();
+      gameModel.player = new Player();
       // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
-      player.setReset(reset);
+      gameModel.player.setReset(reset);
 
       // This listens for key presses and sends the keys to the
       // Player.handleInput() method.
@@ -107,7 +88,7 @@ var Engine = (function(global) {
               40: 'down'
           };
 
-          player.handleInput(allowedKeys[e.keyCode]);
+          gameModel.player.handleInput(allowedKeys[e.keyCode]);
       });
 
       // Create new object to hold the score
@@ -132,6 +113,16 @@ var Engine = (function(global) {
     function update(dt) {
         score.update(dt);
         updateEntities(dt);
+        if (gameModel.textTimer > 0) {
+          let newTime = gameModel.textTimer - dt;
+          gameModel.textTimer = (newTime > 0 ? newTime : 0);
+        } else if (gameModel.textAlpha > 0) {
+          gameModel.textFadeTimer += dt;
+          if (gameModel.textFadeTimer >= TEXT_FADE_DELAY) {
+            gameModel.textAlpha -= TEXT_ALPHA_FADE_AMOUNT;
+            gameModel.textFadeTimer = 0;
+          }
+        }
     }
 
     /* This is called by the update function and loops through all of the
@@ -142,10 +133,12 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
-            enemy.update(dt);
+        gameModel.allEnemies.forEach(function(enemy) {
+            if (enemy) {
+                enemy.update(dt);
+            }
         });
-        player.update();
+        gameModel.player.update();
     }
 
     /* This function initially draws the "game level", it will then call
@@ -158,7 +151,7 @@ var Engine = (function(global) {
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
-        let rowImages = LEVELS[level].rows,
+        let rowImages = LEVELS[gameModel.level].rows,
           row, col;
 
         // Before drawing, clear existing canvas
@@ -186,13 +179,23 @@ var Engine = (function(global) {
         }
         renderEntities();
 
-        key.render();
-
         if (key.isLocked()) {
           // If the level is currently locked, draw the locked blocks in the final row
           for (col = 0; col < GRID_COLS; col++) {
             ctx.drawImage(Resources.get(BLOCK_LOCKED), col * CELL_SIZE_X, PLAYER_WIN_ROW * CELL_SIZE_Y);
           }
+        }
+
+        if (gameModel.textAlpha > 0) {
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.font = STATUS_FONT;
+          ctx.fillStyle = STATUS_TEXT_FILL + gameModel.textAlpha + ")";
+          ctx.strokeStyle = STATUS_TEXT_STROKE + gameModel.textAlpha + ")";
+          ctx.lineWidth = STATUS_TEXT_LINE_WIDTH;
+          ctx.fillText(gameModel.statusText, STATUS_TEXT_X, STATUS_TEXT_Y);
+          ctx.strokeText(gameModel.statusText, STATUS_TEXT_X, STATUS_TEXT_Y);
+          ctx.restore();
         }
     }
 
@@ -201,24 +204,22 @@ var Engine = (function(global) {
      * on your enemy and player entities within app.js
      */
     function renderEntities() {
-        /* Loop through all of the objects within the allEnemies array and call
-         * the render function you have defined.
-         */
-        allEnemies.forEach(function(enemy) {
-          enemy.render();
-        });
-
-        player.render();
-
-        pickups.forEach(function(pickup) {
-          pickup.render();
-        });
-
-        // Render rocks
-        let rocks = LEVELS[level].rocks;
-        for (let rock = 0; rock < rocks.length; rock++) {
-          ctx.drawImage(Resources.get(ROCK), rocks[rock].x * CELL_SIZE_X, rocks[rock].y * CELL_SIZE_Y);
+      for (row = 0; row < GRID_ROWS; row++) {
+        // If there are enemies on this row, render them
+        if (gameModel.allEnemies[row]) {
+          gameModel.allEnemies[row].render();
         }
+
+        // Now loop through each column, rendering other entities
+        for (col = 0; col < GRID_COLS; col++) {
+          if (gameModel.grid[row][col]) {
+            gameModel.grid[row][col].render();
+          }
+          if (gameModel.player.isAt(col, row)) {
+            gameModel.player.render();
+          }
+        }
+      }
     }
 
     /* This function does nothing but it could have been a good place to
@@ -228,8 +229,26 @@ var Engine = (function(global) {
     function reset(levelUp) {
         // If we're levelling up, go to the next level
         if (levelUp) {
-          level++;
+          gameModel.level++;
         }
+
+        if (levelUp || gameModel.level === 0) {
+          gameModel.statusText = LEVEL_TEXT + gameModel.level
+          gameModel.textTimer = LEVEL_TEXT_TIME;
+          gameModel.textAlpha = TEXT_ALPHA_FULL;
+        }
+
+        // initialise a new grid map for this level
+        gameModel.grid = [];
+        for (let row = 0; row < GRID_ROWS; row++) {
+          gameModel.grid[row] = [];
+          for (let col = 0; col < GRID_COLS; col++) {
+            gameModel.grid[row][col] = null;
+          }
+        }
+
+        // Create array of rocks for current level
+        Rock.genRocks();
 
         // Create array of pickups for current level
         Pickup.genPickups();
@@ -241,7 +260,7 @@ var Engine = (function(global) {
         Enemy.genEnemies();
 
         // Reset player to start position and state
-        player.resetPlayer();
+        gameModel.player.resetPlayer();
     }
 
     /* Go ahead and load all of the images we know we're going to need to

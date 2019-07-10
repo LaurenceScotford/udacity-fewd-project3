@@ -1,7 +1,19 @@
 /*
   app.js - Game logic for Jump!
 */
-
+var gameModel = {
+  level: 0,         // Current level
+  locked: false,    // Indicates if current level is locked
+  allEnemies: [],   // References enemy rows for current level
+  player: null,     // References player object
+  score: null,      // References score object
+  lives: null,      // References lives object
+  grid: [],         // References all static entities
+  statusText: "",   // Holds the current status text to show over the game board
+  textTimer: 0,     // Holds the remaining time for the status text to be shown
+  textAlpha: 0,     // Holds the current alpha level for status text
+  textFadeTimer: 0  // Timer to control text fades
+}
 
 // Enemies our player must avoid
 class Enemy {
@@ -79,14 +91,16 @@ class Enemy {
    */
   static genEnemies() {
     // Remove any enemies previously created
-    allEnemies = [];
+    gameModel.allEnemies = [];
 
     // Create the sprite patterns for the enemies
     for (let row = 0; row < NUM_ENEMY_ROWS; row++) {
-      let eRow = LEVELS[level].enemies[row];
+      let eRow = LEVELS[gameModel.level].enemies[row];
       if (eRow !== null) {
         // If there are enemies on this row, create a new Enemy row
-        allEnemies.push(new Enemy(row + ENEMY_ROW_OFFSET, eRow));
+        gameModel.allEnemies.push(new Enemy(row + ENEMY_ROW_OFFSET, eRow));
+      } else {
+        gameModel.allEnemies.push(null);
       }
     }
   }
@@ -134,12 +148,12 @@ class Player {
    * If a collision is detected then the collided function is called in app.js
    */
    detectCollisions() {
-     for (let enemy in allEnemies) {
-       let theEnemy = allEnemies[enemy];
-       if (theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
+     for (let enemy in gameModel.allEnemies) {
+       let theEnemy = gameModel.allEnemies[enemy];
+       if (theEnemy && theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
            PLAYER_WIDTH, PLAYER_HEIGHT)) {
              lives.loseLife();
-             player.resetFunc();
+             this.resetFunc();
              break;
         }
       }
@@ -151,25 +165,23 @@ class Player {
     * and the pickup is destroyed
     */
    detectPickups() {
-     for (let pickup in pickups) {
-       let pType = pickups[pickup].tryPickup(this.gridPos.x, this.gridPos.y);
-       if (pType !== null) {
-         switch(pType) {
-           case HEART:
-            lives.gainLife();
-            break;
-          case GEM_BLUE:
-            score.addScore(BLUE_SCORE);
-            break;
-          case GEM_GREEN:
-            score.addScore(GREEN_SCORE);
-            break;
-          case GEM_ORANGE:
-            score.addScore(ORANGE_SCORE);
-            break;
-         }
-         pickups.splice(pickup, 1);
+     let gridContent = gameModel.grid[this.gridPos.y][this.gridPos.x];
+     if (gridContent instanceof Pickup) {
+       switch(gridContent.getType()) {
+         case HEART:
+          lives.gainLife();
+          break;
+        case GEM_BLUE:
+          score.addScore(BLUE_SCORE);
+          break;
+        case GEM_GREEN:
+          score.addScore(GREEN_SCORE);
+          break;
+        case GEM_ORANGE:
+          score.addScore(ORANGE_SCORE);
+          break;
        }
+       gameModel.grid[this.gridPos.y][this.gridPos.x] = null;
      }
 
      // Now check if the player has picked up the key
@@ -184,13 +196,8 @@ class Player {
       this.resetFunc();
     } else {
       // Check the player is not trying to move into a space occupied by a rock
-      let rocks = LEVELS[level].rocks;
-      for (let rock = 0; rock < rocks.length; rock++) {
-        if (this.targetPos.x === rocks[rock].x && this.targetPos.y === rocks[rock].y) {
-          // Keep player stationery if tyring to move into space with a rock
-          this.targetPos = {...this.gridPos};
-          break;
-        }
+      if (gameModel.grid[this.targetPos.y][this.targetPos.x] instanceof Rock) {
+        this.targetPos = {...this.gridPos};
       }
 
       // Move the player
@@ -202,6 +209,10 @@ class Player {
   // Draw the player sprite
   render() {
     ctx.drawImage(this.sprite, this.playerPos.x, this.playerPos.y);
+  }
+
+  isAt(x, y) {
+    return this.gridPos.x === x && this.gridPos.y === y;
   }
 }
 
@@ -260,14 +271,17 @@ class Lives {
 class Key {
   constructor() {
     this._locked = false;
+    this._x = null;
+    this._y = null;
 
-    let keyInfo = LEVELS[level].key;
+    let keyInfo = LEVELS[gameModel.level].key;
 
     if (keyInfo !== null) {
         this._locked = true;
         this._x = keyInfo.x;
         this._y = keyInfo.y;
-    }
+        gameModel.grid[this._y][this._x] = this;
+      }
   }
 
   isLocked() {
@@ -277,6 +291,7 @@ class Key {
   tryUnlock(x, y) {
     if (this._x === x && this._y === y) {
       this._locked = false;
+      gameModel.grid[this._y][this._x] = undefined;
     }
   }
 
@@ -295,8 +310,8 @@ class Pickup {
     this._y = y;
   }
 
-  tryPickup(x, y) {
-    return this._x === x && this._y === y ? this._type : null;
+  getType(x, y) {
+    return this._type;
   }
 
   render() {
@@ -304,12 +319,37 @@ class Pickup {
   }
 
   static genPickups() {
-    pickups = [];
-
-    let puInfo = LEVELS[level].pickups;
+    let puInfo = LEVELS[gameModel.level].pickups;
 
     for(let pickup = 0; pickup < puInfo.length; pickup++) {
-      pickups.push(new Pickup(puInfo[pickup].type, puInfo[pickup].x, puInfo[pickup].y));
+      let x = puInfo[pickup].x;
+      let y = puInfo[pickup].y;
+      gameModel.grid[y][x] = new Pickup(puInfo[pickup].type, x, y);
+    }
+  }
+}
+
+class Rock {
+  constructor(x, y) {
+    this._x = x;
+    this._y = y;
+  }
+
+  rockAt(x, y) {
+    return this._x === x && this._y === y;
+  }
+
+  render() {
+    ctx.drawImage(Resources.get(ROCK), this._x * CELL_SIZE_X, this._y * CELL_SIZE_Y);
+  }
+
+  static genRocks() {
+    let rockInfo = LEVELS[gameModel.level].rocks;
+
+    for(let rock = 0; rock < rockInfo.length; rock++) {
+      let x = rockInfo[rock].x;
+      let y = rockInfo[rock].y;
+      gameModel.grid[y][x] =  new Rock(x, y);
     }
   }
 }

@@ -45,6 +45,17 @@ const ORANGE_SCORE = 20;
 const WIN_SCORE = 50;
 const GUI_FONT = "40px Arial";
 const SCORE_TEXT = "Score ";
+const STATUS_FONT = "120px Impact";
+const STATUS_TEXT_X = 252;
+const STATUS_TEXT_Y = 303;
+const STATUS_TEXT_FILL = "rgba(255, 0, 0, ";
+const STATUS_TEXT_STROKE = "rgba(0, 0, 0, ";
+const STATUS_TEXT_LINE_WIDTH = 4;
+const TEXT_ALPHA_FULL = 1.0;
+const LEVEL_TEXT_TIME = 1.5;
+const LEVEL_TEXT = "LEVEL ";
+const TEXT_FADE_DELAY = 0.005;
+const TEXT_ALPHA_FADE_AMOUNT = 0.01;
 const SCORE_X = 0;
 const SCORE_Y = 35;
 const SCORE_DELAY = 0.05;
@@ -61,9 +72,9 @@ const LEVELS = [
      {dir: LEFT, speed: 150, pattern:[2]},
 //     {dir: RIGHT, speed: 200, pattern:[4]},
    ],
-   rocks: [{x:1, y:1}],
+   rocks: [{x:1, y:0}],
    pickups: [{type: HEART, x: 3, y:3}, {type: GEM_BLUE, x:0, y:3}, {type: GEM_GREEN, x:1, y:3},
-   {type: GEM_ORANGE, x:2, y:3}],
+   {type: GEM_ORANGE, x:1, y:1}],
    key: {x: 4, y: 3}
   }
 ];
