@@ -28,16 +28,19 @@ const HALF_SPRITE_WIDTH = 50;
 const BLOCK_GRASS = 'images/grass-block.png';
 const BLOCK_STONE = 'images/stone-block.png';
 const BLOCK_WATER = 'images/water-block.png';
+const BLOCK_FLAG = 'images/flag-block.png';
+const ROCK = 'images/Rock.png';
 const RIGHT = 0;
 const LEFT = 1;
 const ONE_SECOND = 1000.0;
 const LEVELS = [
-  {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_STONE, BLOCK_STONE, BLOCK_WATER],
+  {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_STONE, BLOCK_STONE, BLOCK_FLAG],
    enemies: [
      null,
      {dir: RIGHT, speed: 100, pattern:[0]},
      {dir: LEFT, speed: 150, pattern:[2]},
      {dir: RIGHT, speed: 200, pattern:[4]},
-   ]
+   ],
+   rocks: [{x:1, y:1}]
   }
 ];

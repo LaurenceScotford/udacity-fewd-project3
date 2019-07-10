@@ -107,7 +107,7 @@ class Player {
   resetPlayer() {
     this.gridPos = {x: PLAYER_START_X, y: PLAYER_START_Y};
     this.playerPos = gridToCoords(this.gridPos);
-    this.targetPos = this.playerPos;
+    this.targetPos = {...this.gridPos};
   }
 
   // Handle input from the player
@@ -115,20 +115,17 @@ class Player {
     // Adjust player position on grid based on keypress
     switch(allowedKeys) {
       case 'left':
-        this.gridPos.x -= this.gridPos.x > 0;
+        this.targetPos.x = this.gridPos.x > 0 ? this.gridPos.x - 1 : this.gridPos.x;
         break;
       case 'up':
-        this.gridPos.y -= this.gridPos.y > 0;
+        this.targetPos.y = this.gridPos.y > 0 ? this.gridPos.y - 1 : this.gridPos.y;
         break;
       case 'down':
-        this.gridPos.y += this.gridPos.y < GRID_ROWS - 1;
+        this.targetPos.y = this.gridPos.y < GRID_ROWS - 1 ? this.gridPos.y + 1 : this.gridPos.y;
         break;
       case 'right':
-        this.gridPos.x += this.gridPos.x < GRID_COLS - 1;
+        this.targetPos.x = this.targetPos.x < GRID_COLS - 1 ? this.gridPos.x + 1 : this.gridPos.x;
     }
-
-    // Calculate canvas coordinates from new position
-    this.targetPos = gridToCoords(this.gridPos);
   }
 
   /*
@@ -149,11 +146,22 @@ class Player {
   // Update the player's position
   update() {
     // Check for a win condition
-    if (this.gridPos.y === PLAYER_WIN_ROW) {
+    if (this.targetPos.y === PLAYER_WIN_ROW) {
       this.resetFunc();
     } else {
-      // Otherwise move the player
-      this.playerPos = this.targetPos;
+      // Check the player is not trying to move into a space occupied by a rock
+      let rocks = LEVELS[level].rocks;
+      for (let rock = 0; rock < rocks.length; rock++) {
+        if (this.targetPos.x === rocks[rock].x && this.targetPos.y === rocks[rock].y) {
+          // Keep player stationery if tyring to move into space with a rock
+          this.targetPos = {...this.gridPos};
+          break;
+        }
+      }
+
+      // Move the player
+      this.gridPos = {...this.targetPos};
+      this.playerPos = gridToCoords(this.gridPos);
     }
   }
 

@@ -139,6 +139,12 @@ var Engine = (function(global) {
             }
         }
         renderEntities();
+
+        // Render rocks
+        let rocks = LEVELS[level].rocks;
+        for (let rock = 0; rock < rocks.length; rock++) {
+          ctx.drawImage(Resources.get(ROCK), rocks[rock].x * CELL_SIZE_X, rocks[rock].y * CELL_SIZE_Y);
+        }
     }
 
     /* This function is called by the render function and is called on each game
@@ -178,6 +184,8 @@ var Engine = (function(global) {
         BLOCK_STONE,
         BLOCK_WATER,
         BLOCK_GRASS,
+        BLOCK_FLAG,
+        ROCK,
         ENEMY_SPRITE,
         PLAYER_SPRITE
     ]);
