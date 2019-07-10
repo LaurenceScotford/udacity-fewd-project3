@@ -30,6 +30,7 @@ var Engine = (function(global) {
       global.score;
       global.lives;
       global.pickups;
+      global.locked;
 
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
@@ -153,6 +154,18 @@ var Engine = (function(global) {
             }
         }
         renderEntities();
+
+        if (locked) {
+
+          // If the level is currently locked, draw the key...
+          let key = LEVELS[level].key
+          ctx.drawImage(Resources.get(KEY), key.x * CELL_SIZE_X, key.y * CELL_SIZE_Y);
+
+          // ... and the locked blocks in the final row
+          for (col = 0; col < GRID_COLS; col++) {
+            ctx.drawImage(Resources.get(BLOCK_LOCKED), col * CELL_SIZE_X, PLAYER_WIN_ROW * CELL_SIZE_Y);
+          }
+        }
     }
 
     /* This function is called by the render function and is called on each game
@@ -193,7 +206,13 @@ var Engine = (function(global) {
         // Create mutable array of pickups for current level
         pickups = [...LEVELS[level].pickups];
 
+        // Set locked status
+        locked = LEVELS[level].key !== null ? true : false;
+
+        // Create enemies for this level
         Enemy.genEnemies();
+
+        // Reset player to start position and state
         player.resetPlayer();
     }
 
@@ -206,6 +225,7 @@ var Engine = (function(global) {
         BLOCK_WATER,
         BLOCK_GRASS,
         BLOCK_FLAG,
+        BLOCK_LOCKED,
         ROCK,
         HEART,
         GEM_BLUE,

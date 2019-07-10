@@ -121,7 +121,8 @@ class Player {
         this.targetPos.y = this.gridPos.y > 0 ? this.gridPos.y - 1 : this.gridPos.y;
         break;
       case 'down':
-        this.targetPos.y = this.gridPos.y < GRID_ROWS - 1 ? this.gridPos.y + 1 : this.gridPos.y;
+        let lowestRow = locked ? PLAYER_WIN_ROW - 1 : GRID_ROWS - 1;
+        this.targetPos.y = this.gridPos.y < lowestRow ? this.gridPos.y + 1 : this.gridPos.y;
         break;
       case 'right':
         this.targetPos.x = this.targetPos.x < GRID_COLS - 1 ? this.gridPos.x + 1 : this.gridPos.x;
@@ -167,6 +168,14 @@ class Player {
             break;
          }
          pickups.splice(pickup, 1);
+       }
+     }
+
+     // Now check if the player has picked up the key
+     if (locked) {
+       let key = LEVELS[level].key;
+       if (key.x === this.gridPos.x && key.y === this.gridPos.y) {
+         locked = false;
        }
      }
    }

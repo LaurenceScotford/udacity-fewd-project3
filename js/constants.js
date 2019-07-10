@@ -29,6 +29,7 @@ const BLOCK_GRASS = 'images/grass-block.png';
 const BLOCK_STONE = 'images/stone-block.png';
 const BLOCK_WATER = 'images/water-block.png';
 const BLOCK_FLAG = 'images/flag-block.png';
+const BLOCK_LOCKED = 'images/flag-block-locked.png';
 const ROCK = 'images/Rock.png';
 const HEART = 'images/Heart.png';
 const KEY = 'images/Key.png';
@@ -57,6 +58,7 @@ const LEVELS = [
    ],
    rocks: [{x:1, y:1}],
    pickups: [{type: HEART, x: 3, y:3}, {type: GEM_BLUE, x:0, y:3}, {type: GEM_GREEN, x:1, y:3},
-   {type: GEM_ORANGE, x:2, y:3}, {type: KEY, x:4, y:3}]
+   {type: GEM_ORANGE, x:2, y:3}],
+   key: {x: 4, y: 3}
   }
 ];
