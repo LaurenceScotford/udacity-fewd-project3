@@ -52,7 +52,7 @@ var Engine = (function(global) {
         render();
 
         // detect collisions between player and enemy sprites
-        // player.detectCollisions();
+        player.detectCollisions();
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -90,7 +90,6 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
     }
 
     /* This is called by the update function and loops through all of the

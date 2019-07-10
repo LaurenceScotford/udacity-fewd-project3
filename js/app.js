@@ -38,7 +38,7 @@ class Enemy {
   render() {
     for (let enemy = 0; enemy < this.pattern.length; enemy++) {
       let enemyXPos = this.pattern[enemy] * CELL_SIZE_X + this.offset;
-      let enemyYPos = this.row * CELL_SIZE_Y + BUG_Y_OFFSET;
+      let enemyYPos = this.row * CELL_SIZE_Y;
       // Draw enemy
       this._drawEnemy(enemyXPos, enemyYPos);
       // If enemy has wrapped, draw right side of enemy at beginning of row
@@ -59,9 +59,23 @@ class Enemy {
     ctx.restore();
   }
 
+  hasEnemyAt(x, y, width, height) {
+    for(let enemy = 0; enemy < this.pattern.length; enemy++) {
+      let enemyXPos = this.pattern[enemy] * CELL_SIZE_X + this.offset + HALF_SPRITE_WIDTH;
+      let enemyYPos = this.row * CELL_SIZE_Y + ENEMY_Y_OFFSET + ENEMY_HEIGHT / 2;
+      if (boundingBoxCollision(x, y, width, height, enemyXPos, enemyYPos, ENEMY_WIDTH, ENEMY_HEIGHT)) {
+        return true;
+      }
+      enemyXPos -= GRID_COLS * CELL_SIZE_X - 1;
+      if (boundingBoxCollision(x, y, width, height, enemyXPos, enemyYPos, ENEMY_WIDTH, ENEMY_HEIGHT)) {
+        return true;
+      }
+    }
+    return false; // No enemies where found within the tested area
+  }
+
   /*
-   * This function removes enemies that hace reached the end of the path
-   * and randomly generates new enemies when there is room for them
+   * This class factory function generates new enemy rows at the start of a level
    */
   static genEnemies() {
     // Remove any enemies previously created
@@ -92,7 +106,7 @@ class Player {
   // reset player
   resetPlayer() {
     this.gridPos = {x: PLAYER_START_X, y: PLAYER_START_Y};
-    this.playerPos = gridToCoords(this.gridPos, PLAYER_Y_OFFSET);
+    this.playerPos = gridToCoords(this.gridPos);
     this.targetPos = this.playerPos;
   }
 
@@ -114,7 +128,7 @@ class Player {
     }
 
     // Calculate canvas coordinates from new position
-    this.targetPos = gridToCoords(this.gridPos, PLAYER_Y_OFFSET);
+    this.targetPos = gridToCoords(this.gridPos);
   }
 
   /*
@@ -124,17 +138,12 @@ class Player {
    detectCollisions() {
      for(let enemy in allEnemies) {
        let theEnemy = allEnemies[enemy];
-       if (theEnemy.gridPos.y === this.gridPos.y) {
-         let enLft = theEnemy.bugPos.x + EN_EDGES;
-         let enRgt = theEnemy.bugPos.x + Resources.get(theEnemy.sprite).width - EN_EDGES;
-         let plLft = this.playerPos.x + PL_EDGES;
-         let plRgt = this.playerPos.x + Resources.get(this.sprite).width - PL_EDGES;
-         if ((plLft >= enLft && plLft <= enRgt) || (plRgt >= enLft && plRgt <= enRgt)) {
-           player.resetFunc();
-           break;
-         }
-       }
-     }
+       if (theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
+           PLAYER_WIDTH, PLAYER_HEIGHT)) {
+             player.resetFunc();
+             break;
+        }
+      }
    }
 
   // Update the player's position
@@ -157,13 +166,19 @@ class Player {
 // Utility functions
 
 // converts a grid position to canvas coordinates
-function gridToCoords(gridPos, yOffset) {
-  return {x: gridPos.x * CELL_SIZE_X, y: gridPos.y * CELL_SIZE_Y + yOffset}
+function gridToCoords(gridPos) {
+  return {x: gridPos.x * CELL_SIZE_X, y: gridPos.y * CELL_SIZE_Y}
 }
 
 // Converts an x coordinate to an x grid position
 function xCoordToGrid(xPos) {
   return Math.floor(xPos / CELL_SIZE_X);
+}
+
+// Checks for collision between two bounding boxes
+function boundingBoxCollision(box1X, box1Y, box1Width, box1Height, box2X, box2Y, box2Width, box2Height) {
+  return (Math.abs(box1X - box2X) * 2 < (box1Width + box2Width)) &&
+         (Math.abs(box1Y - box2Y) * 2 < (box1Height + box2Height));
 }
 
 // Now instantiate your objects.

@@ -10,9 +10,14 @@ const PLAYER_WIN_ROW = 5;
 const PLAYER_SPRITE = 'images/char-boy.png';
 const CELL_SIZE_X = 101;
 const CELL_SIZE_Y = 83;
-const PLAYER_Y_OFFSET = -12;
-const BUG_Y_OFFSET = -18;
-const BUG_SPEEDS = [25, 200, 250];
+const PLAYER_Y_OFFSET = 47;
+const PLAYER_HEIGHT = 76;
+const PLAYER_X_OFFSET = 17;
+const PLAYER_WIDTH = 67;
+const ENEMY_Y_OFFSET = 53;
+const ENEMY_HEIGHT = 66;
+const ENEMY_X_OFFSET = 2;
+const ENEMY_WIDTH = 97;
 const PL_EDGES = 18;
 const EN_EDGES = 3;
 const GRID_SIZE = {x: 5, y: 6};
@@ -31,7 +36,7 @@ const LEVELS = [
    enemies: [
      null,
      {dir: RIGHT, speed: 100, pattern:[0]},
-     {dir: LEFT, speed: 150, pattern:[0,1,2,3,4,5]},
+     {dir: LEFT, speed: 150, pattern:[2]},
      {dir: RIGHT, speed: 200, pattern:[4]},
    ]
   }
