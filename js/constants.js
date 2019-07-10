@@ -43,7 +43,7 @@ const BLUE_SCORE = 5;
 const GREEN_SCORE = 10;
 const ORANGE_SCORE = 20;
 const WIN_SCORE = 50;
-const FONT = "40px Arial";
+const GUI_FONT = "40px Arial";
 const SCORE_TEXT = "Score ";
 const SCORE_X = 0;
 const SCORE_Y = 35;
@@ -51,6 +51,7 @@ const SCORE_DELAY = 0.05;
 const LIVES_TEXT = "Lives ";
 const LIVES_X = 380;
 const LIVES_Y = 35;
+const START_LIVES = 5;
 const LEVELS = [
   {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
    enemies: [

@@ -121,7 +121,7 @@ class Player {
         this.targetPos.y = this.gridPos.y > 0 ? this.gridPos.y - 1 : this.gridPos.y;
         break;
       case 'down':
-        let lowestRow = locked ? PLAYER_WIN_ROW - 1 : GRID_ROWS - 1;
+        let lowestRow = key.isLocked() ? PLAYER_WIN_ROW - 1 : GRID_ROWS - 1;
         this.targetPos.y = this.gridPos.y < lowestRow ? this.gridPos.y + 1 : this.gridPos.y;
         break;
       case 'right':
@@ -138,7 +138,7 @@ class Player {
        let theEnemy = allEnemies[enemy];
        if (theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
            PLAYER_WIDTH, PLAYER_HEIGHT)) {
-             lives--;
+             lives.loseLife();
              player.resetFunc();
              break;
         }
@@ -152,10 +152,11 @@ class Player {
     */
    detectPickups() {
      for (let pickup in pickups) {
-       if (pickups[pickup].x === this.gridPos.x && pickups[pickup].y === this.gridPos.y) {
-         switch(pickups[pickup].type) {
+       let pType = pickups[pickup].tryPickup(this.gridPos.x, this.gridPos.y);
+       if (pType !== null) {
+         switch(pType) {
            case HEART:
-            lives++;
+            lives.gainLife();
             break;
           case GEM_BLUE:
             score.addScore(BLUE_SCORE);
@@ -172,12 +173,7 @@ class Player {
      }
 
      // Now check if the player has picked up the key
-     if (locked) {
-       let key = LEVELS[level].key;
-       if (key.x === this.gridPos.x && key.y === this.gridPos.y) {
-         locked = false;
-       }
-     }
+     key.tryUnlock(this.gridPos.x, this.gridPos.y);
    }
 
   // Update the player's position
@@ -220,8 +216,11 @@ class Score {
     this._targetScore += score;
   }
 
-  getScore(score) {
-    return this._score;
+  render() {
+    ctx.save();
+    ctx.font = GUI_FONT;
+    ctx.fillText(SCORE_TEXT + this._score, SCORE_X, SCORE_Y);
+    ctx.restore();
   }
 
   update(dt) {
@@ -233,6 +232,87 @@ class Score {
   }
 }
 
+class Lives {
+  constructor() {
+    this._lives = START_LIVES;
+  }
+
+  gainLife() {
+    this._lives++;
+  }
+
+  loseLife() {
+    if (this._lives > 0) {
+      this._lives--;
+    }
+
+    return this._lives === 0;
+  }
+
+  render() {
+    ctx.save();
+    ctx.font = GUI_FONT;
+    ctx.fillText(LIVES_TEXT + this._lives, LIVES_X, LIVES_Y);
+    ctx.restore();
+  }
+}
+
+class Key {
+  constructor() {
+    this._locked = false;
+
+    let keyInfo = LEVELS[level].key;
+
+    if (keyInfo !== null) {
+        this._locked = true;
+        this._x = keyInfo.x;
+        this._y = keyInfo.y;
+    }
+  }
+
+  isLocked() {
+    return this._locked;
+  }
+
+  tryUnlock(x, y) {
+    if (this._x === x && this._y === y) {
+      this._locked = false;
+    }
+  }
+
+  render() {
+    if (this._locked) {
+      // If the level is currently locked, draw the key...
+      ctx.drawImage(Resources.get(KEY), this._x * CELL_SIZE_X, this._y * CELL_SIZE_Y);
+    }
+  }
+}
+
+class Pickup {
+  constructor(type, x, y) {
+    this._type = type;
+    this._x = x;
+    this._y = y;
+  }
+
+  tryPickup(x, y) {
+    return this._x === x && this._y === y ? this._type : null;
+  }
+
+  render() {
+    ctx.drawImage(Resources.get(this._type), this._x * CELL_SIZE_X, this._y * CELL_SIZE_Y);
+  }
+
+  static genPickups() {
+    pickups = [];
+
+    let puInfo = LEVELS[level].pickups;
+
+    for(let pickup = 0; pickup < puInfo.length; pickup++) {
+      pickups.push(new Pickup(puInfo[pickup].type, puInfo[pickup].x, puInfo[pickup].y));
+    }
+  }
+}
 
 // Utility functions
 
@@ -241,36 +321,8 @@ function gridToCoords(gridPos) {
   return {x: gridPos.x * CELL_SIZE_X, y: gridPos.y * CELL_SIZE_Y}
 }
 
-// Converts an x coordinate to an x grid position
-function xCoordToGrid(xPos) {
-  return Math.floor(xPos / CELL_SIZE_X);
-}
-
 // Checks for collision between two bounding boxes
 function boundingBoxCollision(box1X, box1Y, box1Width, box1Height, box2X, box2Y, box2Width, box2Height) {
   return (Math.abs(box1X - box2X) * 2 < (box1Width + box2Width)) &&
          (Math.abs(box1Y - box2Y) * 2 < (box1Height + box2Height));
 }
-
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-var allEnemies = [];
-
-// Place the player object in a variable called player
-var player;
-
-// This will hold the score object
-var score;
-
-// This listens for key presses and sends the keys to the
-// Player.handleInput() method.
-document.addEventListener('keyup', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
-
-    player.handleInput(allowedKeys[e.keyCode]);
-});

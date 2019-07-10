@@ -27,13 +27,27 @@ var Engine = (function(global) {
       global.ctx = canvas.getContext('2d');
       global.lastTime;
       global.level;
-      global.lives;
       global.pickups;
       global.locked;
 
+      // Now instantiate your objects.
+      // Place all enemy objects in an array called allEnemies
+      global.allEnemies = [];
+
+      // Place the player object in a variable called player
+      global.player;
+
+      // These objects will hold the score and lives objects
+      global.score;
+      global.lives;
+
+      // These will hold the key and pickup objects
+      global.key;
+      global.pickups = [];
+      global.rocks = [];
+
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
-      ctx.font = FONT;
       doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
@@ -77,18 +91,33 @@ var Engine = (function(global) {
      * game loop.
      */
     function init() {
-        player = new Player();
-        // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
-        player.setReset(reset);
+      level = 0;
 
-        // Create new object to hold the score
-        score = new Score();
+      player = new Player();
+      // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
+      player.setReset(reset);
 
-        level = 0;
-        lives = 5;
-        reset(false);
-        lastTime = Date.now();
-        main();
+      // This listens for key presses and sends the keys to the
+      // Player.handleInput() method.
+      document.addEventListener('keyup', function(e) {
+          var allowedKeys = {
+              37: 'left',
+              38: 'up',
+              39: 'right',
+              40: 'down'
+          };
+
+          player.handleInput(allowedKeys[e.keyCode]);
+      });
+
+      // Create new object to hold the score
+      score = new Score();
+
+      lives = new Lives();
+
+      reset(false);
+      lastTime = Date.now();
+      main();
     }
 
     /* This function is called by main (our game loop) and itself calls all
@@ -135,10 +164,9 @@ var Engine = (function(global) {
         // Before drawing, clear existing canvas
        ctx.clearRect(0,0,canvas.width,canvas.height);
 
-        // Draw the score and lives
-        ctx.fillText(SCORE_TEXT + score.getScore(), SCORE_X, SCORE_Y);
-        ctx.fillText(LIVES_TEXT + lives, LIVES_X, LIVES_Y);
-
+        // Render the score and lives
+        score.render();
+        lives.render();
 
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
@@ -158,13 +186,10 @@ var Engine = (function(global) {
         }
         renderEntities();
 
-        if (locked) {
+        key.render();
 
-          // If the level is currently locked, draw the key...
-          let key = LEVELS[level].key
-          ctx.drawImage(Resources.get(KEY), key.x * CELL_SIZE_X, key.y * CELL_SIZE_Y);
-
-          // ... and the locked blocks in the final row
+        if (key.isLocked()) {
+          // If the level is currently locked, draw the locked blocks in the final row
           for (col = 0; col < GRID_COLS; col++) {
             ctx.drawImage(Resources.get(BLOCK_LOCKED), col * CELL_SIZE_X, PLAYER_WIN_ROW * CELL_SIZE_Y);
           }
@@ -180,13 +205,13 @@ var Engine = (function(global) {
          * the render function you have defined.
          */
         allEnemies.forEach(function(enemy) {
-            enemy.render();
+          enemy.render();
         });
 
         player.render();
 
         pickups.forEach(function(pickup) {
-          ctx.drawImage(Resources.get(pickup.type), pickup.x * CELL_SIZE_X, pickup.y * CELL_SIZE_Y);
+          pickup.render();
         });
 
         // Render rocks
@@ -206,11 +231,11 @@ var Engine = (function(global) {
           level++;
         }
 
-        // Create mutable array of pickups for current level
-        pickups = [...LEVELS[level].pickups];
+        // Create array of pickups for current level
+        Pickup.genPickups();
 
-        // Set locked status
-        locked = LEVELS[level].key !== null ? true : false;
+        // Create new key object to control level locking
+        key = new Key();
 
         // Create enemies for this level
         Enemy.genEnemies();
