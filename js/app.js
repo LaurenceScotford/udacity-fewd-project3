@@ -6,6 +6,7 @@ var gameModel = {
   locked: false,    // Indicates if current level is locked
   allEnemies: [],   // References enemy rows for current level
   player: null,     // References player object
+  star: null,       // References star object
   score: null,      // References score object
   lives: null,      // References lives object
   statusText: null, // References statusText object
@@ -129,7 +130,7 @@ class Player {
     if (this._playerState === PL_STATE_PLAY) {
       // Check for a win condition
       if (this.targetPos.y === PLAYER_WIN_ROW) {
-        gameModel.score.addScore(WIN_SCORE);
+        gameModel.score.addScore(gameModel.star.claimAt(this.gridPos.x) ? STAR_SCORE : WIN_SCORE);
         this._playerState = PL_STATE_ANIM;
         this._playerAnim = PL_END_ANIM;
       } else if (gameModel.grid[this.targetPos.y][this.targetPos.x] instanceof Rock) {
@@ -408,6 +409,50 @@ class Rock {
   }
 }
 
+class Star {
+  constructor() {
+    this._position = {x: Math.floor(Math.random() * GRID_COLS), y: PLAYER_WIN_ROW};
+    this._timeSinceStart = 0;
+    this._alpha = ALPHA_FULL;
+    this._available = true;
+  }
+
+  claimAt(col) {
+    let claimed = false
+    if (this._available && this._position.x === col) {
+      this._available = false;
+      this._alpha = 0;
+      claimed = true;
+    }
+    return claimed;
+  }
+
+  update(dt) {
+    if (this._available) {
+      this._timeSinceStart += dt;
+      let maxTime = STAR_BASE_TIME - STAR_TIME_DEDUCT * gameModel.level;
+      let timeRemaining = maxTime - this._timeSinceStart;
+      if (timeRemaining <= STAR_FADE_TIME) {
+        this._alpha = timeRemaining / STAR_FADE_TIME;
+      }
+      if (timeRemaining <= 0) {
+        this._available = false;
+        this._alpha = 0;
+      }
+    }
+  }
+
+  render() {
+    if (this._available) {
+      let position = gridToCoords(this._position);
+      ctx.save();
+      ctx.globalAlpha = this._alpha;
+      ctx.drawImage(Resources.get(STAR), position.x, position.y);
+      ctx.restore();
+    }
+  }
+}
+
 class Score {
   constructor() {
     this._score = 0;
@@ -475,7 +520,7 @@ class StatusText {
   setText(text, time) {
     this._text = text;
     this._timer = time;
-    this._alpha = TEXT_ALPHA_FULL;
+    this._alpha = ALPHA_FULL;
   }
 
   render() {

@@ -91,6 +91,8 @@ var Engine = (function(global) {
           gameModel.player.handleInput(allowedKeys[e.keyCode]);
       });
 
+      gameModel.star = new Star();
+
       // Create new object to hold GUI elements
       gameModel.score = new Score();
       gameModel.lives = new Lives();
@@ -129,6 +131,7 @@ var Engine = (function(global) {
                 enemy.update(dt);
             }
         });
+        gameModel.star.update(dt);
         gameModel.player.update(dt);
     }
 
@@ -176,6 +179,8 @@ var Engine = (function(global) {
             ctx.drawImage(Resources.get(BLOCK_LOCKED), col * CELL_SIZE_X, PLAYER_WIN_ROW * CELL_SIZE_Y);
           }
         }
+
+        gameModel.star.render();
 
         gameModel.statusText.render();
     }
@@ -257,6 +262,7 @@ var Engine = (function(global) {
         GEM_BLUE,
         GEM_GREEN,
         GEM_ORANGE,
+        STAR,
         KEY,
         ENEMY_SPRITE,
         LILYPAD_SPRITE,

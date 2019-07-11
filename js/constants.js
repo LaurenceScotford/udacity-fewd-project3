@@ -87,6 +87,7 @@ const KEY = 'images/Key.png';
 const GEM_BLUE = 'images/Gem Blue.png';
 const GEM_GREEN = 'images/Gem Green.png';
 const GEM_ORANGE = 'images/Gem Orange.png';
+const STAR = 'images/Star.png';
 const RIGHT = 0;
 const LEFT = 1;
 const ONE_SECOND = 1000.0;
@@ -94,6 +95,7 @@ const BLUE_SCORE = 5;
 const GREEN_SCORE = 10;
 const ORANGE_SCORE = 20;
 const WIN_SCORE = 50;
+const STAR_SCORE = 200;
 const GUI_FONT = "40px Arial";
 const SCORE_TEXT = "Score ";
 const STATUS_FONT = "120px Impact";
@@ -102,7 +104,7 @@ const STATUS_TEXT_Y = 303;
 const STATUS_TEXT_FILL = "rgba(255, 0, 0, ";
 const STATUS_TEXT_STROKE = "rgba(0, 0, 0, ";
 const STATUS_TEXT_LINE_WIDTH = 4;
-const TEXT_ALPHA_FULL = 1.0;
+const ALPHA_FULL = 1.0;
 const LEVEL_TEXT_TIME = 1.5;
 const LEVEL_TEXT = "LEVEL ";
 const TEXT_FADE_DELAY = 0.005;
@@ -114,6 +116,9 @@ const LIVES_TEXT = "Lives ";
 const LIVES_X = 380;
 const LIVES_Y = 35;
 const START_LIVES = 5;
+const STAR_BASE_TIME = 20;
+const STAR_TIME_DEDUCT = 1;
+const STAR_FADE_TIME = 5;
 /*
 Levvel editing notes:
 All grid coordinates are zero based from top left
