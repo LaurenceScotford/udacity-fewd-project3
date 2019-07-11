@@ -24,6 +24,10 @@ class Player {
     this.resetFunc = resetFunc;
   }
 
+  whereAreYou() {
+    return {...this.playerPos};
+  }
+
   // reset player
   resetPlayer() {
     this._playerState = PL_STATE_ANIM;
@@ -70,27 +74,34 @@ class Player {
    */
    detectCollisions() {
     if (this._playerState === PL_STATE_PLAY) {
-       this._travelling = false;
-       for (let enemy in gameModel.allEnemies) {
-         let theEnemy = gameModel.allEnemies[enemy];
-         if (theEnemy && theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
-             PLAYER_WIDTH, PLAYER_HEIGHT)) {
-           if (theEnemy.getType() === LILYPAD_SPRITE) {
-             this._travelling = true;
-           } else {
-             gameModel.lives.loseLife();
-             this._playerState = PL_STATE_ANIM;
-             this._playerAnim = PL_DEATH_ANIM;
-             break;
-           }
-         }
+      // Check for a win condition
+      if (this.gridPos.y === PLAYER_WIN_ROW) {
+        gameModel.score.addScore(gameModel.star.claimAt(this.gridPos.x) ? STAR_SCORE : WIN_SCORE);
+        this._playerState = PL_STATE_ANIM;
+        this._playerAnim = PL_END_ANIM;
+      } else {
+        this._travelling = false;
+        for (let enemy in gameModel.allEnemies) {
+          let theEnemy = gameModel.allEnemies[enemy];
+          if (theEnemy && theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
+              PLAYER_WIDTH, PLAYER_HEIGHT)) {
+            if (theEnemy.getType() === LILYPAD_SPRITE) {
+              this._travelling = true;
+            } else {
+              gameModel.lives.loseLife();
+              this._playerState = PL_STATE_ANIM;
+              this._playerAnim = PL_DEATH_ANIM;
+              break;
+            }
+          }
+        }
+      }
+      if (this._playerState === PL_STATE_PLAY && LEVELS[gameModel.level].rows[this.targetPos.y] === BLOCK_WATER && !this._travelling) {
+          // Player has drowned
+          gameModel.lives.loseLife();
+          this._playerState = PL_STATE_ANIM;
+          this._playerAnim = PL_DEATH_ANIM;
        }
-     }
-     if (this._playerState === PL_STATE_PLAY && LEVELS[gameModel.level].rows[this.targetPos.y] === BLOCK_WATER && !this._travelling) {
-         // Player has drowned
-         gameModel.lives.loseLife();
-         this._playerState = PL_STATE_ANIM;
-         this._playerAnim = PL_DEATH_ANIM;
      }
    }
 
@@ -128,12 +139,7 @@ class Player {
   // Update the player's position
   update(dt) {
     if (this._playerState === PL_STATE_PLAY) {
-      // Check for a win condition
-      if (this.targetPos.y === PLAYER_WIN_ROW) {
-        gameModel.score.addScore(gameModel.star.claimAt(this.gridPos.x) ? STAR_SCORE : WIN_SCORE);
-        this._playerState = PL_STATE_ANIM;
-        this._playerAnim = PL_END_ANIM;
-      } else if (gameModel.grid[this.targetPos.y][this.targetPos.x] instanceof Rock) {
+      if (gameModel.grid[this.targetPos.y][this.targetPos.x] instanceof Rock) {
         // Player is trying to move into a space occupied by a rock
         this.targetPos = {...this.gridPos};
       }
@@ -457,25 +463,56 @@ class Score {
   constructor() {
     this._score = 0;
     this._targetScore = 0;
-    this._timeSinceUpdate = 0;
+    this._timeSinceScoreUpdate = 0;
+    this._pointsDisplay = [];
   }
 
   addScore(score) {
     this._targetScore += score;
+    let playerPos = gameModel.player.whereAreYou();
+    this._pointsDisplay.push(
+      {points: score, timeLeft: POINTS_DISPLAY_TIME, alpha: ALPHA_FULL,
+       x: playerPos.x + HALF_SPRITE_WIDTH, y: playerPos.y + PLAYER_Y_OFFSET}
+    );
+
   }
 
   render() {
     ctx.save();
     ctx.font = GUI_FONT;
     ctx.fillText(SCORE_TEXT + this._score, SCORE_X, SCORE_Y);
+    if (this._pointsDisplay.length > 0) {
+      ctx.textAlign = "center";
+      ctx.font = POINTS_FONT;
+      ctx.lineWidth = POINTS_TEXT_LINE_WIDTH;
+      for (let nextPoints = 0; nextPoints < this._pointsDisplay.length; nextPoints++) {
+        let thePoints = this._pointsDisplay[nextPoints];
+        ctx.fillStyle = POINTS_TEXT_FILL + thePoints.alpha + ")";
+        ctx.strokeStyle = POINTS_TEXT_STROKE + thePoints.alpha + ")";
+        ctx.fillText(thePoints.points, thePoints.x, thePoints.y);
+        ctx.strokeText(thePoints.points, thePoints.x, thePoints.y);
+      }
+    }
     ctx.restore();
   }
 
   update(dt) {
-    this._timeSinceUpdate += dt;
-    if (this._timeSinceUpdate >= SCORE_DELAY) {
+    this._timeSinceScoreUpdate += dt;
+    if (this._timeSinceScoreUpdate >= SCORE_DELAY) {
       this._score += (this._score < this._targetScore);
-      this._timeSinceUpdate = 0;
+      this._timeSinceScoreUpdate = 0;
+    }
+    if (this._pointsDisplay.length > 0) {
+      for (let nextPoints = this._pointsDisplay.length - 1; nextPoints >= 0; nextPoints--) {
+        let thePoints = this._pointsDisplay[nextPoints];
+        thePoints.timeLeft -= dt;
+        if (thePoints.timeLeft <= 0) {
+          this._pointsDisplay.splice(nextPoints, 1);
+        } else {
+          thePoints.alpha = thePoints.timeLeft / POINTS_DISPLAY_TIME;
+          thePoints.y -= POINTS_SPEED * dt;
+        }
+      }
     }
   }
 }

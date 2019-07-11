@@ -151,10 +151,6 @@ var Engine = (function(global) {
         // Before drawing, clear existing canvas
        ctx.clearRect(0,0,canvas.width,canvas.height);
 
-        // Render the score and lives
-        gameModel.score.render();
-        gameModel.lives.render();
-
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
          * portion of the "grid"
@@ -182,6 +178,9 @@ var Engine = (function(global) {
 
         gameModel.star.render();
 
+        // Render the GUI elements
+        gameModel.score.render();
+        gameModel.lives.render();
         gameModel.statusText.render();
     }
 

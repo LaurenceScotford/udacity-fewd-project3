@@ -119,6 +119,12 @@ const START_LIVES = 5;
 const STAR_BASE_TIME = 20;
 const STAR_TIME_DEDUCT = 1;
 const STAR_FADE_TIME = 5;
+const POINTS_TEXT_FILL = "rgba(0, 255, 0, ";
+const POINTS_TEXT_STROKE = "rgba(0, 0, 0, ";
+const POINTS_TEXT_LINE_WIDTH = 2;
+const POINTS_FONT = "80px Impact";
+const POINTS_DISPLAY_TIME = 1;
+const POINTS_SPEED = 10;
 /*
 Levvel editing notes:
 All grid coordinates are zero based from top left
