@@ -91,10 +91,10 @@ var Engine = (function(global) {
           gameModel.player.handleInput(allowedKeys[e.keyCode]);
       });
 
-      // Create new object to hold the score
-      score = new Score();
-
-      lives = new Lives();
+      // Create new object to hold GUI elements
+      gameModel.score = new Score();
+      gameModel.lives = new Lives();
+      gameModel.statusText = new StatusText();
 
       reset(false);
       lastTime = Date.now();
@@ -111,18 +111,9 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
-        score.update(dt);
+        gameModel.score.update(dt);
+        gameModel.statusText.update(dt);
         updateEntities(dt);
-        if (gameModel.textTimer > 0) {
-          let newTime = gameModel.textTimer - dt;
-          gameModel.textTimer = (newTime > 0 ? newTime : 0);
-        } else if (gameModel.textAlpha > 0) {
-          gameModel.textFadeTimer += dt;
-          if (gameModel.textFadeTimer >= TEXT_FADE_DELAY) {
-            gameModel.textAlpha -= TEXT_ALPHA_FADE_AMOUNT;
-            gameModel.textFadeTimer = 0;
-          }
-        }
     }
 
     /* This is called by the update function and loops through all of the
@@ -138,7 +129,7 @@ var Engine = (function(global) {
                 enemy.update(dt);
             }
         });
-        gameModel.player.update();
+        gameModel.player.update(dt);
     }
 
     /* This function initially draws the "game level", it will then call
@@ -158,8 +149,8 @@ var Engine = (function(global) {
        ctx.clearRect(0,0,canvas.width,canvas.height);
 
         // Render the score and lives
-        score.render();
-        lives.render();
+        gameModel.score.render();
+        gameModel.lives.render();
 
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
@@ -186,17 +177,7 @@ var Engine = (function(global) {
           }
         }
 
-        if (gameModel.textAlpha > 0) {
-          ctx.save();
-          ctx.textAlign = "center";
-          ctx.font = STATUS_FONT;
-          ctx.fillStyle = STATUS_TEXT_FILL + gameModel.textAlpha + ")";
-          ctx.strokeStyle = STATUS_TEXT_STROKE + gameModel.textAlpha + ")";
-          ctx.lineWidth = STATUS_TEXT_LINE_WIDTH;
-          ctx.fillText(gameModel.statusText, STATUS_TEXT_X, STATUS_TEXT_Y);
-          ctx.strokeText(gameModel.statusText, STATUS_TEXT_X, STATUS_TEXT_Y);
-          ctx.restore();
-        }
+        gameModel.statusText.render();
     }
 
     /* This function is called by the render function and is called on each game
@@ -233,9 +214,7 @@ var Engine = (function(global) {
         }
 
         if (levelUp || gameModel.level === 0) {
-          gameModel.statusText = LEVEL_TEXT + gameModel.level
-          gameModel.textTimer = LEVEL_TEXT_TIME;
-          gameModel.textAlpha = TEXT_ALPHA_FULL;
+          gameModel.statusText.setText(LEVEL_TEXT + gameModel.level, LEVEL_TEXT_TIME)
         }
 
         // initialise a new grid map for this level

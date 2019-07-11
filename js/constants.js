@@ -11,9 +11,59 @@ const PLAYER_SPRITE = 'images/char-boy.png';
 const CELL_SIZE_X = 101;
 const CELL_SIZE_Y = 83;
 const PLAYER_Y_OFFSET = 47;
+const PLAYER_Y_CENTRE = 91;
 const PLAYER_HEIGHT = 76;
 const PLAYER_X_OFFSET = 17;
 const PLAYER_WIDTH = 67;
+const PL_STATE_ANIM = 0;
+const PL_STATE_PLAY = 1;
+/*
+Animation descriptor notes
+Each player animation has a series of movements, each represented by an object with the
+following elements:
+rotation - Indicates the starting orientation and spin:
+           angle - position in degrees (0 = normal orientation)
+           spinRate - the number of degrees to spin every second. Set to zero for no spin,
+           a postive value for clockwise spin and a negative value for anticlockwise spin.
+start - the starting position (canvas coordinates) for the sprite. Note that setting a value
+        to null causes the animation player to use the current position for that value. It's
+        an object with:
+        x - x position
+        y - y position
+end - as above but where the movement should finish
+speed - the speed of the sprite's movement in pixels per second
+*/
+const PL_START_ANIM = [{rotation: {angle: 0, spinRate: 0},
+                        start: {x: null, y: -119}, end: {x: null, y: 0}, speed: 400},
+                        {rotation: {angle: 0, spinRate: 0},
+                        start: {x: null, y: null}, end: {x: null, y: -30}, speed: 400},
+                        {rotation: {angle: 0, spinRate: 0},
+                        start: {x: null, y: null}, end: {x: null, y: 0}, speed: 400},
+                        {rotation: {angle: 0, spinRate: 0},
+                        start: {x: null, y: null}, end: {x: null, y: -10}, speed: 400},
+                        {rotation: {angle: 0, spinRate: 0},
+                        start: {x: null, y: null}, end: {x: null, y: 0}, speed: 400}
+                      ];
+const PL_DEATH_ANIM = [{rotation: {angle: 0, spinRate: 720},
+                        start: {x: null, y: null}, end: {x: null, y: -119}, speed: 500}];
+const PL_END_ANIM = [{rotation: {angle: -5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+                     {rotation: {angle: -5, spinRate: 0},
+                      start: {x: null, y: PLAYER_WIN_ROW * CELL_SIZE_Y},
+                      end: {x: null, y: 415}, speed: 200},
+                     {rotation: {angle: 5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+                     {rotation: {angle: 5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
+                     {rotation: {angle: -5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+                     {rotation: {angle: -5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
+                     {rotation: {angle: 5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+                     {rotation: {angle: 5, spinRate: 0},
+                      start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
+                    ];
 const ENEMY_Y_OFFSET = 53;
 const ENEMY_HEIGHT = 66;
 const ENEMY_X_OFFSET = 2;
@@ -63,14 +113,55 @@ const LIVES_TEXT = "Lives ";
 const LIVES_X = 380;
 const LIVES_Y = 35;
 const START_LIVES = 5;
+const EN_TYPE_BUG = 0;
+const EN_TYPE_LILY = 1;
+/*
+Levvel editing notes:
+All grid coordinates are zero based from top left
+rows = The block type to use for each row from top to bottom. The bottom row should usually be
+       BLOCK_FLAG, especially if it's a locked level. The top row should never be water or the
+       player will die instantly)
+enemies - holds the enemy pattens for the four enemy rows (2nd row (1) to 5th row (4). Note
+          that the lily pad type is not strictly an enemy but uses the enemy mechanic, so
+          should be included here. If you don't want enemies on a particular row, set it to
+          null. Each occupied row is an object with fhe following:
+          type - enemy type, either EN_TYPE_BUG or EN_TYPE_LILY.  BUgs should be matched to a
+                 grass or stone block and lilypads to a water block.
+          dir - the direction of movement for that row, either LEFT or RIGHT
+          speed - How fast the enemies on that row move in pixels per second.
+          pattern: a list of number representing column positions. An enemy will start at each
+          of the specified columns.
+rocks - an array of rocks to place. Note thers is nothing to stop you putting rocks in a row
+        with bug enemies, but they will look odd as they will float over the tops of the bugs.
+        If you don't want any rocks, set it to an empty array.
+        Each is an object with:
+        x - column on the grid
+        y - row on the grid.
+pickups - a list of pickups to include on this level. If you don't want any pickups set it to
+          an empty array. Note there is nothing to stop you placing pickups in a row with bug
+          enemies but they will look odd as they will float over the top of the bugs. Each
+          is an object with:
+          type - HEART = extra life, GEM_BLUE = 5 bonus points, GEM_GREEN = 10 bonus points
+                 GEM_ORANGE = 20 bonus points
+          x - column on the grid
+          y - row on the grid
+key - The location of the key, if you want the level to a be a locked level, if not, set it to
+      null. Note there is nothing to stop you from putting the key in a row with bug enemies,
+      but it will look odd as it will float over the tops of the bugs.
+      It's an object with:
+      x - column on the grid
+      y - row on the grid
+Note - generally speaking you should avoid putting anything at x: 2, y: 0 as this is the
+player's starting point, although you could give them a pickup there if you wanted to give
+them an instant bonus.
+*/
 const LEVELS = [
   {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
    enemies: [
      null,
-     {dir: RIGHT, speed: 100, pattern:[0]},
+     {type: EN_TYPE_BUG, dir: RIGHT, speed: 100, pattern:[0]},
      null,
-     {dir: LEFT, speed: 150, pattern:[2]},
-//     {dir: RIGHT, speed: 200, pattern:[4]},
+     {type: EN_TYPE_BUG, dir: LEFT, speed: 150, pattern:[2]},
    ],
    rocks: [{x:1, y:0}],
    pickups: [{type: HEART, x: 3, y:3}, {type: GEM_BLUE, x:0, y:3}, {type: GEM_GREEN, x:1, y:3},
