@@ -35,6 +35,7 @@ class Player {
     this._playerAngle = 0;
     this._rotation = 0;
     this._speed = 0;
+    this._travelling = false;
   }
 
   // Handle input from the player
@@ -44,16 +45,20 @@ class Player {
       switch(allowedKeys) {
         case 'left':
           this.targetPos.x = this.gridPos.x > 0 ? this.gridPos.x - 1 : this.gridPos.x;
+          this._travelling = false;
           break;
         case 'up':
           this.targetPos.y = this.gridPos.y > 0 ? this.gridPos.y - 1 : this.gridPos.y;
+          this._travelling = false;
           break;
         case 'down':
           let lowestRow = key.isLocked() ? PLAYER_WIN_ROW - 1 : GRID_ROWS - 1;
           this.targetPos.y = this.gridPos.y < lowestRow ? this.gridPos.y + 1 : this.gridPos.y;
+          this._travelling = false;
           break;
         case 'right':
           this.targetPos.x = this.targetPos.x < GRID_COLS - 1 ? this.gridPos.x + 1 : this.gridPos.x;
+          this._travelling = false;
       }
     }
   }
@@ -64,17 +69,28 @@ class Player {
    */
    detectCollisions() {
     if (this._playerState === PL_STATE_PLAY) {
+       this._travelling = false;
        for (let enemy in gameModel.allEnemies) {
          let theEnemy = gameModel.allEnemies[enemy];
          if (theEnemy && theEnemy.hasEnemyAt(this.playerPos.x + HALF_SPRITE_WIDTH, this.playerPos.y + PLAYER_Y_OFFSET + PLAYER_HEIGHT / 2,
              PLAYER_WIDTH, PLAYER_HEIGHT)) {
-               gameModel.lives.loseLife();
-               this._playerState = PL_START_ANIM;
-               this._playerAnim = PL_DEATH_ANIM;
-               break;
-          }
-        }
-      }
+           if (theEnemy.getType() === LILYPAD_SPRITE) {
+             this._travelling = true;
+           } else {
+             gameModel.lives.loseLife();
+             this._playerState = PL_STATE_ANIM;
+             this._playerAnim = PL_DEATH_ANIM;
+             break;
+           }
+         }
+       }
+     }
+     if (this._playerState === PL_STATE_PLAY && LEVELS[gameModel.level].rows[this.targetPos.y] === BLOCK_WATER && !this._travelling) {
+         // Player has drowned
+         gameModel.lives.loseLife();
+         this._playerState = PL_STATE_ANIM;
+         this._playerAnim = PL_DEATH_ANIM;
+     }
    }
 
    /*
@@ -110,19 +126,30 @@ class Player {
 
   // Update the player's position
   update(dt) {
-      if (this._playerState === PL_STATE_PLAY) {
-        // Check for a win condition
-        if (this.targetPos.y === PLAYER_WIN_ROW) {
-          gameModel.score.addScore(WIN_SCORE);
-          this._playerState = PL_STATE_ANIM;
-          this._playerAnim = PL_END_ANIM;
-        } else {
-          // Check the player is not trying to move into a space occupied by a rock
-          if (gameModel.grid[this.targetPos.y][this.targetPos.x] instanceof Rock) {
-            this.targetPos = {...this.gridPos};
+    if (this._playerState === PL_STATE_PLAY) {
+      // Check for a win condition
+      if (this.targetPos.y === PLAYER_WIN_ROW) {
+        gameModel.score.addScore(WIN_SCORE);
+        this._playerState = PL_STATE_ANIM;
+        this._playerAnim = PL_END_ANIM;
+      } else if (gameModel.grid[this.targetPos.y][this.targetPos.x] instanceof Rock) {
+        // Player is trying to move into a space occupied by a rock
+        this.targetPos = {...this.gridPos};
+      }
+      // Move the player
+      if (this._travelling) {
+        let lilypad = LEVELS[gameModel.level].enemies[this.gridPos.y - 1];
+        let movement = lilypad.speed * dt;
+        movement = lilypad.dir === LEFT ? -movement : movement;
+        this.playerPos.x += movement;
+        if (this.playerPos.x < 0) {
+          this.playerPos.x = 0;
+        } else if (this.playerPos.x > (GRID_COLS - 1) * CELL_SIZE_X) {
+          this.playerPos.x = (GRID_COLS - 1) * CELL_SIZE_X;
         }
-
-        // Move the player
+        this.gridPos.x = xGridFromCoord(this.playerPos.x);
+        this.targetPos.x = this.gridPos.x;
+      } else {
         this.gridPos = {...this.targetPos};
         this.playerPos = gridToCoords(this.gridPos);
       }
@@ -207,7 +234,12 @@ class Enemy {
     this.dir = eRow.dir;
     this.speed = eRow.speed;
     this.pattern = eRow.pattern;
-    this.sprite = Resources.get(ENEMY_SPRITE);
+    this._type = eRow.type;
+    this.sprite = Resources.get(eRow.type);
+  }
+
+  getType() {
+    return this._type;
   }
 
   // Update the enemy's position, required method for game
@@ -475,6 +507,10 @@ class StatusText {
 }
 
 // Utility functions
+
+function xGridFromCoord(xCoord) {
+  return Math.round(xCoord / CELL_SIZE_X);
+}
 
 // converts a grid position to canvas coordinates
 function gridToCoords(gridPos) {

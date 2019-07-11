@@ -4,6 +4,7 @@ const CANVAS_HEIGHT = 606;
 const GRID_ROWS = 6;
 const GRID_COLS = 5;
 const ENEMY_SPRITE = 'images/enemy-bug.png';
+const LILYPAD_SPRITE = 'images/lilypad.png'
 const PLAYER_START_X = 2;
 const PLAYER_START_Y = 0;
 const PLAYER_WIN_ROW = 5;
@@ -113,8 +114,6 @@ const LIVES_TEXT = "Lives ";
 const LIVES_X = 380;
 const LIVES_Y = 35;
 const START_LIVES = 5;
-const EN_TYPE_BUG = 0;
-const EN_TYPE_LILY = 1;
 /*
 Levvel editing notes:
 All grid coordinates are zero based from top left
@@ -125,8 +124,8 @@ enemies - holds the enemy pattens for the four enemy rows (2nd row (1) to 5th ro
           that the lily pad type is not strictly an enemy but uses the enemy mechanic, so
           should be included here. If you don't want enemies on a particular row, set it to
           null. Each occupied row is an object with fhe following:
-          type - enemy type, either EN_TYPE_BUG or EN_TYPE_LILY.  BUgs should be matched to a
-                 grass or stone block and lilypads to a water block.
+          type - enemy type, either LILYPAD_SPRITE or ENEMY_SPRITE. BUgs should be matched to
+                 a grass or stone block and lilypads to a water block.
           dir - the direction of movement for that row, either LEFT or RIGHT
           speed - How fast the enemies on that row move in pixels per second.
           pattern: a list of number representing column positions. An enemy will start at each
@@ -156,16 +155,16 @@ player's starting point, although you could give them a pickup there if you want
 them an instant bonus.
 */
 const LEVELS = [
-  {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
+  {rows: [BLOCK_GRASS, BLOCK_WATER, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
    enemies: [
+     {type: LILYPAD_SPRITE, dir: RIGHT, speed: 50, pattern:[2, 3]},
+     {type: ENEMY_SPRITE, dir: RIGHT, speed: 100, pattern:[0]},
      null,
-     {type: EN_TYPE_BUG, dir: RIGHT, speed: 100, pattern:[0]},
-     null,
-     {type: EN_TYPE_BUG, dir: LEFT, speed: 150, pattern:[2]},
+     {type: ENEMY_SPRITE, dir: LEFT, speed: 150, pattern:[2]},
    ],
    rocks: [{x:1, y:0}],
    pickups: [{type: HEART, x: 3, y:3}, {type: GEM_BLUE, x:0, y:3}, {type: GEM_GREEN, x:1, y:3},
-   {type: GEM_ORANGE, x:1, y:1}],
+   {type: GEM_ORANGE, x:2, y:3}],
    key: {x: 4, y: 3}
   }
 ];

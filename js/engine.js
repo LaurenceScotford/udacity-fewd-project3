@@ -259,6 +259,7 @@ var Engine = (function(global) {
         GEM_ORANGE,
         KEY,
         ENEMY_SPRITE,
+        LILYPAD_SPRITE,
         PLAYER_SPRITE
     ]);
     Resources.onReady(init);
