@@ -50,7 +50,7 @@ Although this is a 2D game, the way the sprites are designed suggested a sort of
 - Loop through the grid from top to bottom:
  - if a row has enemies, render these First
  - Now loop through each column from left to right and render any static entity at that location
- - If the player is at the current location, ender the player at this point
+ - If the player is at the current location, render the player at this point
 - If the level is locked, draw the locked blocks on the bottom row over the normal blocks
 - Finally render the star in the bottom row
 
@@ -74,7 +74,7 @@ These are stored as well-documented objects in an array in the constants.js file
 Some improvements that could be made, given time:
 - Replace the bounding box collision detection with a hybrid bounding box/pixel data collision detection to make collisions pixel accurate
 - Slide, rather than jump the player character between locations and add some animation in. Could also add side and back views so player is always facing direction of movement.
-- Improve the way lilypads are handled. At the moment if the player collide with a lilypad then they are deemed to be on the lilypad, so it's possible to ride a lilypad clinging to its very edge, which looks odd. This could be changes so that the player has to have their centre over the lilypad to stay on it. This would work best if combined with a splashing/drowning animation.
+- Improve the way lilypads are handled. At the moment if the player collide with a lilypad then they are deemed to be on the lilypad, so it's possible to ride a lilypad clinging to its very edge, which looks odd. This could be changed so that the player has to have their centre over the lilypad to stay on it. This would work best if combined with a splashing/drowning animation.
 - Allow for longer, possibly scrolling, playfields.
 - Allow the player to select from the different character sprites supplied. Perhaps some of these could have special abilities, e.g. the cat character has extra lives but doesn't get collectibles.
 - Add more levels, above the initial 10 I've created.
