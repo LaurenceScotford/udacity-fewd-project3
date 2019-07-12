@@ -2,6 +2,8 @@
 ## Project 3 - Classic Arcade Game Clone
 This project is a real-time HTML5 game, loosely based on the arcade classic Frogger.
 
+NOTE: This project uses ES6 features that are not currently Internet Explorer or Microsoft Edge friendly, but it will work fine on Chrome/Safari/Firefox, etc.
+
 To play the game, the player must use the arrow keys to guide the player character from the top row of the playfield to the bottom row.
 
 While doing this, they must avoid hazards:
@@ -79,3 +81,4 @@ Some improvements that could be made, given time:
 - Allow the player to select from the different character sprites supplied. Perhaps some of these could have special abilities, e.g. the cat character has extra lives but doesn't get collectibles.
 - Add more levels, above the initial 10 I've created.
 - Add instructions (or an attract mode) and win/lose screens.
+- Create a transpiled version that plays nicely with Microsoft browsers
