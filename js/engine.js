@@ -1,7 +1,7 @@
 /* Engine.js
  * This file provides the game loop functionality (update entities and render),
  * draws the initial game board on the screen, and then calls the update and
- * render methods on your player and enemy objects (defined in your app.js).
+ * render methods on the player, enemy and otheer game objects (defined in app.js).
  *
  * A game engine works by drawing the entire game screen over and over, kind of
  * like a flipbook you may have created as a kid. When your player moves across
@@ -13,13 +13,13 @@
  * writing app.js a little simpler to work with.
  */
 
-var Engine = (function(global) {
+const Engine = (function(global) {
     /* Predefine the variables we'll be using within this scope,
      * create the canvas element, grab the 2D context for that canvas
      * set the canvas element's height/width and add it to the DOM.
      */
 
-     var doc = global.document,
+     const doc = global.document,
         win = global.window;
 
         // create visible canvas
@@ -35,13 +35,13 @@ var Engine = (function(global) {
      * and handles properly calling the update and render methods.
      */
     function main() {
-        /* Get our time delta information which is required if your game
+        /* Get our time delta information which is required if the game
          * requires smooth animation. Because everyone's computer processes
          * instructions at different speeds we need a constant value that
          * would be the same for everyone (regardless of how fast their
          * computer is) - hurray time!
          */
-        var now = Date.now(),
+        const now = Date.now(),
             dt = (now - lastTime) / ONE_SECOND;
 
         /* Call our update/render functions, pass along the time delta to
@@ -53,7 +53,7 @@ var Engine = (function(global) {
         // detect collisions between player and enemy sprites
         gameModel.player.detectCollisions();
 
-        // detect detectPickups
+        // detect Pickups the player can collect
         gameModel.player.detectPickups();
 
         /* Set our lastTime variable which is used to determine the time delta
@@ -65,6 +65,7 @@ var Engine = (function(global) {
          * function again as soon as the browser is able to draw another frame.
          */
         win.requestAnimationFrame(main);
+
     }
 
     /* This function does some initial setup that should only occur once,
@@ -75,25 +76,31 @@ var Engine = (function(global) {
       gameModel.level = 0;
 
       gameModel.player = new Player();
-      // Set the reset function that the player should call when it collides with an enemy or reaches the target zone
+
+      // Set the reset callback that the player should call when it collides with an
+      // enemy or reaches the target zone
       gameModel.player.setReset(reset);
 
       // This listens for key presses and sends the keys to the
       // Player.handleInput() method.
       document.addEventListener('keyup', function(e) {
-          var allowedKeys = {
+          const allowedKeys = {
               37: 'left',
               38: 'up',
               39: 'right',
               40: 'down'
           };
 
+          // If debug mode is switched on, you can advance to the next level
+          // using the Return key
+          if (DEBUG) {
+            allowedKeys[13] = 'advance';
+          }
+
           gameModel.player.handleInput(allowedKeys[e.keyCode]);
       });
 
-      gameModel.star = new Star();
-
-      // Create new object to hold GUI elements
+      // Create new objects to hold GUI elements
       gameModel.score = new Score();
       gameModel.lives = new Lives();
       gameModel.statusText = new StatusText();
@@ -104,13 +111,7 @@ var Engine = (function(global) {
     }
 
     /* This function is called by main (our game loop) and itself calls all
-     * of the functions which may need to update entity's data. Based on how
-     * you implement your collision detection (when two entities occupy the
-     * same space, for instance when your character should die), you may find
-     * the need to add an additional function call here. For now, we've left
-     * it commented out - you may or may not want to implement this
-     * functionality this way (you could just implement collision detection
-     * on the entities themselves within your app.js file).
+     * of the functions which need to update entity's data.
      */
     function update(dt) {
         gameModel.score.update(dt);
@@ -119,10 +120,10 @@ var Engine = (function(global) {
     }
 
     /* This is called by the update function and loops through all of the
-     * objects within your allEnemies array as defined in app.js and calls
-     * their update() methods. It will then call the update function for your
-     * player object. These update methods should focus purely on updating
-     * the data/properties related to the object. Do your drawing in your
+     * objects within the allEnemies array as defined in app.js and calls
+     * their update() methods. It will then call the update function for the star
+     * and player objects. These update methods focus purely on updating
+     * the data/properties related to the object. Drawing is done in
      * render methods.
      */
     function updateEntities(dt) {
@@ -169,13 +170,16 @@ var Engine = (function(global) {
         }
         renderEntities();
 
-        if (key.isLocked()) {
-          // If the level is currently locked, draw the locked blocks in the final row
+        // If the level is currently locked, draw the locked blocks in the final row
+        // Note these blocks must be drawn after all entities other than the star to preserve
+        // z ordering
+        if (gameModel.key.isLocked()) {
           for (col = 0; col < GRID_COLS; col++) {
             ctx.drawImage(Resources.get(BLOCK_LOCKED), col * CELL_SIZE_X, PLAYER_WIN_ROW * CELL_SIZE_Y);
           }
         }
 
+        // Render the star on the final row
         gameModel.star.render();
 
         // Render the GUI elements
@@ -185,10 +189,11 @@ var Engine = (function(global) {
     }
 
     /* This function is called by the render function and is called on each game
-     * tick. Its purpose is to then call the render functions you have defined
-     * on your enemy and player entities within app.js
+     * tick. Its purpose is to then call the render functions defined
+     * on the enemy, player and other entities within app.js
      */
     function renderEntities() {
+      // Loop through each row of grid from top to bottom
       for (row = 0; row < GRID_ROWS; row++) {
         // If there are enemies on this row, render them
         if (gameModel.allEnemies[row]) {
@@ -200,6 +205,7 @@ var Engine = (function(global) {
           if (gameModel.grid[row][col]) {
             gameModel.grid[row][col].render();
           }
+          // If the payer is at the current location, render them now
           if (gameModel.player.isAt(col, row)) {
             gameModel.player.render();
           }
@@ -207,18 +213,30 @@ var Engine = (function(global) {
       }
     }
 
-    /* This function does nothing but it could have been a good place to
-     * handle game reset states - maybe a new game menu or a game over screen
-     * those sorts of things. It's only called once by the init() method.
+    /* This function is called whenever a level needs to be reset. The parameter is set
+     * to true if the next level is to be started, or false if the current level is to be
+     * reset.
      */
     function reset(levelUp) {
+        // Check if the player is out of lives, if, so reset engine
+        if (!gameModel.lives.hasLives()) {
+          gameModel.level = 0;
+          gameModel.lives = new Lives();
+          gameModel.score = new Score();
+        }
+
         // If we're levelling up, go to the next level
         if (levelUp) {
           gameModel.level++;
+          // If player has defeated all the levels, wrap back to level 1
+          if (gameModel.level ==+ LEVELS.length) {
+            gameModel.level = 0;
+          }
         }
 
+        // If we're starting a new level, show the level number to the player
         if (levelUp || gameModel.level === 0) {
-          gameModel.statusText.setText(LEVEL_TEXT + gameModel.level, LEVEL_TEXT_TIME)
+          gameModel.statusText.setText(LEVEL_TEXT + (gameModel.level + 1), LEVEL_TEXT_TIME)
         }
 
         // initialise a new grid map for this level
@@ -237,10 +255,13 @@ var Engine = (function(global) {
         Pickup.genPickups();
 
         // Create new key object to control level locking
-        key = new Key();
+        gameModel.key = new Key();
 
         // Create enemies for this level
         Enemy.genEnemies();
+
+        // Create a new star object for this level
+        gameModel.star = new Star();
 
         // Reset player to start position and state
         gameModel.player.resetPlayer();

@@ -1,25 +1,42 @@
 // Constant values used in game
+const DEBUG = true;     // If true enables skipping of levels by hitting return key
+
+// Sizes of canvas, game grid and individual cells on grid, etc
 const CANVAS_WIDTH = 505;
 const CANVAS_HEIGHT = 606;
 const GRID_ROWS = 6;
 const GRID_COLS = 5;
-const ENEMY_SPRITE = 'images/enemy-bug.png';
-const LILYPAD_SPRITE = 'images/lilypad.png'
-const PLAYER_START_X = 2;
-const PLAYER_START_Y = 0;
-const PLAYER_WIN_ROW = 5;
-const PLAYER_SPRITE = 'images/char-boy.png';
 const CELL_SIZE_X = 101;
 const CELL_SIZE_Y = 83;
-const PLAYER_Y_OFFSET = 47;
-const PLAYER_Y_CENTRE = 91;
-const PLAYER_HEIGHT = 76;
-const PLAYER_X_OFFSET = 17;
-const PLAYER_WIDTH = 67;
-const PL_STATE_ANIM = 0;
-const PL_STATE_PLAY = 1;
+const HALF_SPRITE_WIDTH = 50;
+const RIGHT = 0;
+const LEFT = 1;
+const ONE_SECOND = 1000.0;  // Used for converting times in seconds to milliseconds
+const GUI_FONT = "40px Arial";
+const ALPHA_FULL = 1.0; // Maximum opacity
+
+// Background images used to create game board
+const BLOCK_GRASS = 'images/grass-block.png';
+const BLOCK_STONE = 'images/stone-block.png';
+const BLOCK_WATER = 'images/water-block.png';
+const BLOCK_FLAG = 'images/flag-block.png';
+const BLOCK_LOCKED = 'images/flag-block-locked.png';
+
+// Player
+const PLAYER_START_X = 2; // Grid position
+const PLAYER_START_Y = 0;
+const PLAYER_WIN_ROW = 5; // The row the player must reach to win the game
+const PLAYER_SPRITE = 'images/char-boy.png';
+const PLAYER_Y_OFFSET = 47; // Pixel offset from top of player sprite to start of visible data
+const PLAYER_Y_CENTRE = 91; // Used for rotation (y centre of visible data)
+const PLAYER_HEIGHT = 76;   // Height of visible data
+const PLAYER_X_OFFSET = 17; // Pixel offset from left edge of sprite to start of visible data
+const PLAYER_WIDTH = 67;  // Width of visible data
+const PL_STATE_ANIM = 0;  // Player sprite is currently in animation (no controllable)
+const PL_STATE_PLAY = 1;  // Player sprite can be controlled
+
 /*
-Animation descriptor notes
+Player animation descriptor notes
 Each player animation has a series of movements, each represented by an object with the
 following elements:
 rotation - Indicates the starting orientation and spin:
@@ -34,97 +51,90 @@ start - the starting position (canvas coordinates) for the sprite. Note that set
 end - as above but where the movement should finish
 speed - the speed of the sprite's movement in pixels per second
 */
-const PL_START_ANIM = [{rotation: {angle: 0, spinRate: 0},
-                        start: {x: null, y: -119}, end: {x: null, y: 0}, speed: 400},
-                        {rotation: {angle: 0, spinRate: 0},
-                        start: {x: null, y: null}, end: {x: null, y: -30}, speed: 400},
-                        {rotation: {angle: 0, spinRate: 0},
-                        start: {x: null, y: null}, end: {x: null, y: 0}, speed: 400},
-                        {rotation: {angle: 0, spinRate: 0},
-                        start: {x: null, y: null}, end: {x: null, y: -10}, speed: 400},
-                        {rotation: {angle: 0, spinRate: 0},
-                        start: {x: null, y: null}, end: {x: null, y: 0}, speed: 400}
-                      ];
-const PL_DEATH_ANIM = [{rotation: {angle: 0, spinRate: 720},
-                        start: {x: null, y: null}, end: {x: null, y: -119}, speed: 500}];
-const PL_END_ANIM = [{rotation: {angle: -5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
-                     {rotation: {angle: -5, spinRate: 0},
-                      start: {x: null, y: PLAYER_WIN_ROW * CELL_SIZE_Y},
-                      end: {x: null, y: 415}, speed: 200},
-                     {rotation: {angle: 5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
-                     {rotation: {angle: 5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
-                     {rotation: {angle: -5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
-                     {rotation: {angle: -5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
-                     {rotation: {angle: 5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
-                     {rotation: {angle: 5, spinRate: 0},
-                      start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
-                    ];
-const ENEMY_Y_OFFSET = 53;
-const ENEMY_HEIGHT = 66;
-const ENEMY_X_OFFSET = 2;
-const ENEMY_WIDTH = 97;
-const PL_EDGES = 18;
-const EN_EDGES = 3;
-const GRID_SIZE = {x: 5, y: 6};
-const ENEMY_PROBS = [0, 0, 0];
-const NUM_ENEMY_ROWS = 4;
-const ENEMY_ROW_OFFSET = 1;
-const HALF_SPRITE_WIDTH = 50;
-const BLOCK_GRASS = 'images/grass-block.png';
-const BLOCK_STONE = 'images/stone-block.png';
-const BLOCK_WATER = 'images/water-block.png';
-const BLOCK_FLAG = 'images/flag-block.png';
-const BLOCK_LOCKED = 'images/flag-block-locked.png';
-const ROCK = 'images/Rock.png';
-const HEART = 'images/Heart.png';
+const PL_START_ANIM = [
+  {rotation: {angle: 0, spinRate: 0}, start: {x: null, y: -119}, end: {x: null, y: 0}, speed: 400},
+  {rotation: {angle: 0, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: -30}, speed: 400},
+  {rotation: {angle: 0, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 0}, speed: 400},
+  {rotation: {angle: 0, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: -10}, speed: 400},
+  {rotation: {angle: 0, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 0}, speed: 400}
+];
+const PL_DEATH_ANIM = [
+  {rotation: {angle: 0, spinRate: 720}, start: {x: null, y: null}, end: {x: null, y: -119}, speed: 500}
+];
+const PL_END_ANIM = [
+  {rotation: {angle: -5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+  {rotation: {angle: -5, spinRate: 0}, start: {x: null, y: PLAYER_WIN_ROW * CELL_SIZE_Y}, end: {x: null, y: 415}, speed: 200},
+  {rotation: {angle: 5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+  {rotation: {angle: 5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
+  {rotation: {angle: -5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+  {rotation: {angle: -5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
+  {rotation: {angle: 5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 374}, speed: 200},
+  {rotation: {angle: 5, spinRate: 0}, start: {x: null, y: null}, end: {x: null, y: 415}, speed: 200},
+];
+
+
+// Enemy
+const ENEMY_SPRITE = 'images/enemy-bug.png';
+const LILYPAD_SPRITE = 'images/lilypad.png';
+const ENEMY_Y_OFFSET = 53;  // Pixel offset from top edge of sprite to start of visible data
+const ENEMY_HEIGHT = 66;  // Height of visible data
+const ENEMY_X_OFFSET = 2; // Pixel offset from left edge of sprite to start of visible data
+const ENEMY_WIDTH = 97; // Width of visible data
+const ENEMY_ROW_OFFSET = 1; // First row that can be occupied by enemies
+
+// Key
 const KEY = 'images/Key.png';
+
+// Pickups
+const HEART = 'images/Heart.png';
 const GEM_BLUE = 'images/Gem Blue.png';
 const GEM_GREEN = 'images/Gem Green.png';
 const GEM_ORANGE = 'images/Gem Orange.png';
-const STAR = 'images/Star.png';
-const RIGHT = 0;
-const LEFT = 1;
-const ONE_SECOND = 1000.0;
 const BLUE_SCORE = 5;
 const GREEN_SCORE = 10;
 const ORANGE_SCORE = 20;
-const WIN_SCORE = 50;
+
+// Rocks
+const ROCK = 'images/Rock.png';
+
+// Star
+const STAR = 'images/Star.png';
 const STAR_SCORE = 200;
-const GUI_FONT = "40px Arial";
-const SCORE_TEXT = "Score ";
-const STATUS_FONT = "120px Impact";
-const STATUS_TEXT_X = 252;
-const STATUS_TEXT_Y = 303;
-const STATUS_TEXT_FILL = "rgba(255, 0, 0, ";
-const STATUS_TEXT_STROKE = "rgba(0, 0, 0, ";
-const STATUS_TEXT_LINE_WIDTH = 4;
-const ALPHA_FULL = 1.0;
-const LEVEL_TEXT_TIME = 1.5;
-const LEVEL_TEXT = "LEVEL ";
-const TEXT_FADE_DELAY = 0.005;
-const TEXT_ALPHA_FADE_AMOUNT = 0.01;
-const SCORE_X = 0;
-const SCORE_Y = 35;
-const SCORE_DELAY = 0.05;
-const LIVES_TEXT = "Lives ";
-const LIVES_X = 380;
-const LIVES_Y = 35;
-const START_LIVES = 5;
 const STAR_BASE_TIME = 20;
 const STAR_TIME_DEDUCT = 1;
 const STAR_FADE_TIME = 5;
-const POINTS_TEXT_FILL = "rgba(0, 255, 0, ";
-const POINTS_TEXT_STROKE = "rgba(0, 0, 0, ";
+
+// Score
+const WIN_SCORE = 50;
+const SCORE_TEXT = 'Score ';
+const SCORE_X = 0;
+const SCORE_Y = 35;
+const SCORE_DELAY = 0.05;
+const POINTS_TEXT_FILL = 'rgba(0, 255, 0, ';
+const POINTS_TEXT_STROKE = 'rgba(0, 0, 0, ';
 const POINTS_TEXT_LINE_WIDTH = 2;
-const POINTS_FONT = "80px Impact";
+const POINTS_FONT = '80px Impact';
 const POINTS_DISPLAY_TIME = 1;
 const POINTS_SPEED = 10;
+
+// Lives
+const LIVES_TEXT = 'Lives ';
+const LIVES_X = 380;
+const LIVES_Y = 35;
+const START_LIVES = 5;
+
+// Status text
+const STATUS_FONT = '120px Impact';
+const STATUS_TEXT_X = 252;
+const STATUS_TEXT_Y = 303;
+const STATUS_TEXT_FILL = 'rgba(255, 0, 0, ';
+const STATUS_TEXT_STROKE = 'rgba(0, 0, 0, ';
+const STATUS_TEXT_LINE_WIDTH = 4;
+const LEVEL_TEXT_TIME = 0.5;
+const LEVEL_TEXT = 'LEVEL ';
+const TEXT_FADE_DELAY = 0.005;
+const TEXT_ALPHA_FADE_AMOUNT = 0.01;
+
 /*
 Levvel editing notes:
 All grid coordinates are zero based from top left
@@ -166,16 +176,124 @@ player's starting point, although you could give them a pickup there if you want
 them an instant bonus.
 */
 const LEVELS = [
-  {rows: [BLOCK_GRASS, BLOCK_WATER, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
+  // Level 1
+  {rows: [BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
    enemies: [
-     {type: LILYPAD_SPRITE, dir: RIGHT, speed: 50, pattern:[2, 3]},
+     null,
      {type: ENEMY_SPRITE, dir: RIGHT, speed: 100, pattern:[0]},
      null,
      {type: ENEMY_SPRITE, dir: LEFT, speed: 150, pattern:[2]},
    ],
-   rocks: [{x:1, y:0}],
-   pickups: [{type: HEART, x: 3, y:3}, {type: GEM_BLUE, x:0, y:3}, {type: GEM_GREEN, x:1, y:3},
-   {type: GEM_ORANGE, x:2, y:3}],
-   key: {x: 4, y: 3}
+   rocks: [],
+   pickups: [{type: GEM_BLUE, x:2, y:3}],
+   key: null
+  },
+  // Levwl 2
+  {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_WATER, BLOCK_STONE, BLOCK_FLAG],
+   enemies: [
+     {type: ENEMY_SPRITE, dir: RIGHT, speed: 100, pattern:[0, 3]},
+     null,
+     {type: LILYPAD_SPRITE, dir: RIGHT, speed: 50, pattern:[2, 3]},
+     {type: ENEMY_SPRITE, dir: LEFT, speed: 150, pattern:[2]},
+  ],
+  rocks: [],
+  pickups: [],
+  key: null
+  },
+  // Level 3
+  {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
+   enemies: [
+     {type: ENEMY_SPRITE, dir: LEFT, speed: 150, pattern:[3]},
+     {type: ENEMY_SPRITE, dir: RIGHT, speed: 100, pattern:[2, 5]},
+     null,
+     {type: ENEMY_SPRITE, dir: LEFT, speed: 150, pattern:[2]},
+   ],
+   rocks: [{x: 1, y:3}, {x:3, y:3}],
+   pickups: [{type: GEM_GREEN, x:2, y:3}],
+   key: null
+   },
+   // Level 4
+   {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_WATER, BLOCK_GRASS, BLOCK_FLAG],
+    enemies: [
+      {type: ENEMY_SPRITE, dir: RIGHT, speed: 150, pattern:[3]},
+      null,
+      {type: LILYPAD_SPRITE, dir: LEFT, speed: 100, pattern:[2, 5]},
+      null
+    ],
+    rocks: [{x:1, y:4}, {x:2, y:4}],
+    pickups: [],
+    key: null
+    },
+    // Level 5
+    {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
+     enemies: [
+      {type: ENEMY_SPRITE, dir: LEFT, speed: 100, pattern:[3, 4]},
+      {type: ENEMY_SPRITE, dir: LEFT, speed: 200, pattern:[2]},
+      null,
+      {type: ENEMY_SPRITE, dir: RIGHT, speed: 150, pattern:[0, 3]},
+     ],
+     rocks: [],
+     pickups: [],
+     key: {x: 3, y:3}
+     },
+   // Level 6
+   {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_WATER, BLOCK_WATER, BLOCK_FLAG],
+    enemies: [
+      {type: ENEMY_SPRITE, dir: RIGHT, speed: 250, pattern:[0]},
+      null,
+      {type: LILYPAD_SPRITE, dir: LEFT, speed: 100, pattern:[2, 4]},
+      {type: LILYPAD_SPRITE, dir: RIGHT, speed: 250, pattern:[4]}
+    ],
+    rocks: [{x: 3, y: 2}],
+    pickups: [{type: HEART, x: 4, y: 2}],
+    key: null
+    },
+    // Level 7
+    {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
+     enemies: [
+       {type: ENEMY_SPRITE, dir: RIGHT, speed: 200, pattern:[1, 3]},
+       null,
+       null,
+       {type: ENEMY_SPRITE, dir: LEFT, speed: 250, pattern:[4]}
+     ],
+     rocks: [{x: 0, y: 2}, {x: 0, y: 3}, {x: 1, y: 3}, {x: 2, y:3}, {x:2, y:2}],
+     pickups: [{type: GEM_ORANGE, x: 4, y: 3}],
+     key: {x: 1, y: 2}
+     },
+     // Level 8
+    {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_WATER, BLOCK_STONE, BLOCK_WATER, BLOCK_FLAG],
+     enemies: [
+        {type: ENEMY_SPRITE, dir: LEFT, speed: 100, pattern:[1, 3]},
+        {type: LILYPAD_SPRITE, dir: RIGHT, speed: 50, pattern:[4]},
+        {type: ENEMY_SPRITE, dir: RIGHT, speed: 300, pattern:[4]},
+        {type: LILYPAD_SPRITE, dir: LEFT, speed: 50, pattern:[2]}
+     ],
+     rocks: [],
+     pickups: [],
+     key: null
+    },
+    // Level 9
+    {rows: [BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_GRASS, BLOCK_FLAG],
+     enemies: [
+       {type: ENEMY_SPRITE, dir: RIGHT, speed: 100, pattern:[1, 3]},
+       null,
+       {type: ENEMY_SPRITE, dir: LEFT, speed: 300, pattern:[4]},
+       null
+     ],
+     rocks: [{x: 2, y: 2}, {x: 3, y: 2}, {x: 2, y: 4}, {x: 3, y: 4}, {x: 4, y: 4}],
+     pickups: [{type: HEART, x: 4, y:2}],
+     key: null
+    },
+    // Level 10
+    {rows: [BLOCK_GRASS, BLOCK_WATER, BLOCK_STONE, BLOCK_GRASS, BLOCK_STONE, BLOCK_FLAG],
+    enemies: [
+      {type: LILYPAD_SPRITE, dir: LEFT, speed: 100, pattern:[4]},
+      {type: ENEMY_SPRITE, dir: RIGHT, speed: 300, pattern:[0]},
+      null,
+      {type: ENEMY_SPRITE, dir: LEFT, speed: 200, pattern:[1, 3]},
+    ],
+    rocks: [{x: 3, y: 0}, {x: 1, y: 3}, {x: 3, y: 3}],
+    pickups: [{type: GEM_BLUE, x: 0, y:3}, {type: GEM_GREEN, x:2, y:3}, {type: GEM_ORANGE, x: 4, y:3}],
+    key: {x: 4, y: 0}
   }
 ];
